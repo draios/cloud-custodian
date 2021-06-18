@@ -63,6 +63,7 @@ def operator_in(x, y):
 def operator_ni(x, y):
     return x not in y
 
+
 def contains_subset_list(list_of_lists, sublist):
     """Iterate through a list of lists and return True if a list contains sublist"""
     sublist = set(sublist)
