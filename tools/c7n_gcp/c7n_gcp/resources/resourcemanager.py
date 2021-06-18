@@ -6,7 +6,6 @@ import itertools
 from c7n_gcp.actions import SetIamPolicy, MethodAction
 from c7n_gcp.provider import resources
 from c7n_gcp.query import QueryResourceManager, TypeInfo
-from c7n_gcp.filters import IamPolicyFilter
 
 from c7n.resolver import ValuesFrom
 from c7n.utils import type_schema, local_session
@@ -120,17 +119,6 @@ class Project(QueryResourceManager):
             for child in self.data.get('query'):
                 if 'filter' in child:
                     return {'filter': child['filter']}
-
-
-@Project.filter_registry.register('iam-policy')
-class ProjectIamPolicyFilter(IamPolicyFilter):
-    """
-    Overrides the base implementation to process Project resources correctly.
-    """
-    def _verb_arguments(self, resource):
-        verb_arguments = SetIamPolicy._verb_arguments(self, resource)
-        verb_arguments['body'] = {}
-        return verb_arguments
 
 
 @Project.filter_registry.register('iam-user-roles')

@@ -3,4 +3,3 @@
 #
 from .metrics import GCPMetricsFilter
 from .sccfindings import SecurityComandCenterFindingsFilter
-from .iampolicy import IamPolicyFilter
