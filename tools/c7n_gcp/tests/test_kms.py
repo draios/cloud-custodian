@@ -144,6 +144,30 @@ class KmsCryptoKeyTest(BaseTest):
         self.assertEqual(resources[0]['name'], resource_name)
         self.assertEqual(resources[0][parent_annotation_key]['name'], parent_resource_name)
 
+    def test_kms_cryptokey_iam_policy_filter(self):
+        factory = self.replay_flight_data('kms-cryptokey-iam-policy')
+        p = self.load_policy(
+            {'name': 'resource',
+             'resource': 'gcp.kms-cryptokey',
+             'filters': [{
+                 'type': 'iam-policy',
+                 'key': 'bindings[*].members[]',
+                 'op': 'intersect',
+                 'value': ['allUsers', 'allAuthenticatedUsers']
+             }]},
+            session_factory=factory)
+        resources = p.run()
+        self.assertEqual(len(resources), 2)
+
+        for resource in resources:
+            self.assertTrue('iamPolicy' in resource)
+            bindings = resource['iamPolicy']['bindings']
+            members = set()
+            for binding in bindings:
+                for member in binding['members']:
+                    members.add(member)
+            self.assertTrue('allUsers' in members or 'allAuthenticatedUsers' in members)
+
 
 class KmsCryptoKeyVersionTest(BaseTest):
     def test_kms_cryptokey_version_query(self):
