@@ -55,6 +55,51 @@ class SlackDelivery:
                     resource_list,
                     self.logger, 'slack_template', 'slack_default',
                     self.config['templates_folders'])
+            
+            #Written to private message individual creators of items
+            elif target.startswith('slack://@'):
+                target_tag = sqs_message.get('action', ()).get('owner_tag')
+                sub_resource_list = []
+                last_owner = ''
+
+
+                if target_tag == '':
+                    target_tag = "AutoTag_Creator"
+
+                for t in resource_list[0].get('Tags'):
+                    if t.get('Key') == target_tag:
+                        last_owner = t.get('Value')
+
+                for resource_item in resource_list:
+                    new_owner = ''
+                    for t in resource_item.get('Tags'):
+                        if t.get('Key') == target_tag:
+                            new_owner = t.get('Value')
+
+
+                    if last_owner != new_owner:
+                        if last_owner != '':
+                            user_address = last_owner + target.split('slack://', 1)[1]
+                            resolved_addrs = self.retrieve_user_im([user_address])
+                            for address, slack_target in resolved_addrs.items():
+                                slack_messages[address] = get_rendered_jinja(
+                                    slack_target, sqs_message, sub_resource_list,
+                                    self.logger, 'slack_template', 'slack_default',
+                                    self.config['templates_folders'])
+                        sub_resource_list = []
+                        last_owner = new_owner
+                    sub_resource_list.append(resource_item)
+
+
+                if last_owner != '':
+                    user_address = last_owner + target.split('slack://', 1)[1]
+                    resolved_addrs = self.retrieve_user_im([user_address])
+                    for address, slack_target in resolved_addrs.items():
+                        slack_messages[address] = get_rendered_jinja(
+                            slack_target, sqs_message, sub_resource_list,
+                            self.logger, 'slack_template', 'slack_default',
+                            self.config['templates_folders'])
+                    
             elif target.startswith('slack://webhook/#') and self.config.get('slack_webhook'):
                 webhook_target = self.config.get('slack_webhook')
                 slack_messages[webhook_target] = get_rendered_jinja(
