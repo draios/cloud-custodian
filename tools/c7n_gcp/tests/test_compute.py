@@ -185,6 +185,29 @@ class InstanceTest(BaseTest):
         resources = p.run()
         self.assertEqual(len(resources), 1)
 
+    def test_service_accounts_filter(self):
+        factory = self.replay_flight_data('instance-flatten-filter')
+
+        p = self.load_policy({
+            'name': 'resource',
+            'resource': 'gcp.instance',
+            'filters': [{
+                'type': 'service-accounts',
+                'key': '"test1@developer.gserviceaccount.com"',
+                'op': 'contains',
+                'value': 'https://www.googleapis.com/auth/cloud-platform'
+            }]},
+            session_factory=factory)
+        resources = p.run()
+        self.assertEqual(len(resources), 2)
+
+        for resource in resources:
+            self.assertTrue('flattenedServiceAccounts' in resource)
+            flattenedSA = resource['flattenedServiceAccounts']
+            self.assertTrue('test1@developer.gserviceaccount.com' in flattenedSA)
+            self.assertTrue('https://www.googleapis.com/auth/cloud-platform' in
+            flattenedSA['test1@developer.gserviceaccount.com'])
+
 
 class DiskTest(BaseTest):
 

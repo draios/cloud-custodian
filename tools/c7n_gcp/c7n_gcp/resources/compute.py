@@ -53,6 +53,46 @@ class Instance(QueryResourceManager):
                     }}
 
 
+@Instance.filter_registry.register('service-accounts')
+class ServiceAccounts(ValueFilter):
+    """Filters an instance by its authorized service accounts and their available list of scopes.
+
+    :example:
+
+    Filter all instances that grant the service account test123@developer.gserviceaccount.com
+    the scope Allow full access to all Cloud APIs
+
+    .. code-block :: yaml
+
+       policies:
+        - name: gcp-service-accounts
+          resource: gcp.instance
+          filters:
+            - type: service-accounts
+              key: "test123@developer.gserviceaccount.com"
+              op: contains
+              value: https://www.googleapis.com/auth/cloud-platform
+    """
+
+    schema = type_schema('service-accounts', rinherit=ValueFilter.schema)
+
+    def process(self, resources, event=None):
+        # model = self.manager.get_model()
+        # session = local_session(self.manager.session_factory)
+        # client = self.get_client(session, model)
+
+        for r in resources:
+            r["flattenedServiceAccounts"] = {}
+            for sa in r["serviceAccounts"]:
+                email, scopes = sa["email"], sa["scopes"]
+                r["flattenedServiceAccounts"][email] = scopes
+
+        return super(ServiceAccounts, self).process(resources)
+
+
+    def __call__(self, r):
+        return self.match(r['flattenedServiceAccounts'])
+
 @Instance.filter_registry.register('offhour')
 class InstanceOffHour(OffHour):
 
