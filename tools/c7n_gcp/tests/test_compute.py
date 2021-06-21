@@ -185,6 +185,27 @@ class InstanceTest(BaseTest):
         resources = p.run()
         self.assertEqual(len(resources), 1)
 
+    def test_metadata_filter(self):
+        factory = self.replay_flight_data('instance-flatten-filter')
+
+        p = self.load_policy({
+            'name': 'resource',
+            'resource': 'gcp.instance',
+            'filters': [{
+                'type': 'metadata',
+                'key': '"block-project-ssh-keys"',
+                'value': 'true'
+            }]},
+            session_factory=factory)
+        resources = p.run()
+        self.assertEqual(len(resources), 1)
+
+        for resource in resources:
+            self.assertTrue('flattenedMetadata' in resource)
+            flattenedMeta = resource['flattenedMetadata']
+            self.assertTrue('block-project-ssh-keys' in flattenedMeta)
+            self.assertTrue(flattenedMeta['block-project-ssh-keys'] == 'true')
+
 
 class DiskTest(BaseTest):
 

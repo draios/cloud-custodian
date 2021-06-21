@@ -53,6 +53,46 @@ class Instance(QueryResourceManager):
                     }}
 
 
+@Instance.filter_registry.register('metadata')
+class Metadata(ValueFilter):
+    """Filters an instance by the metadata key/value pairs assigned to it.
+
+    :example:
+
+    Filter all instances that do not block project ssh keys
+
+    .. code-block :: yaml
+
+       policies:
+        - name: gcp-metadata
+          resource: gcp.instance
+          filters:
+            - type: metadata
+              key: '"block-project-ssh-keys"'
+              value: "false"
+    """
+
+    schema = type_schema('metadata', rinherit=ValueFilter.schema)
+
+    def process(self, resources, event=None):
+        # model = self.manager.get_model()
+        # session = local_session(self.manager.session_factory)
+        # client = self.get_client(session, model)
+
+        for r in resources:
+            r["flattenedMetadata"] = {}
+            if "items" not in r["metadata"]:
+                continue
+            for kv in r["metadata"]["items"]:
+                key, value = kv["key"], kv["value"]
+                r["flattenedMetadata"][key] = value
+
+        return super(Metadata, self).process(resources)
+
+    def __call__(self, r):
+        return self.match(r['flattenedMetadata'])
+
+
 @Instance.filter_registry.register('offhour')
 class InstanceOffHour(OffHour):
 
