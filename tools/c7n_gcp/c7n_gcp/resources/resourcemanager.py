@@ -142,7 +142,7 @@ class IamPolicyUserRoles(ValueFilter):
     """
 
     schema = type_schema('iam-user-roles', rinherit=ValueFilter.schema)
-#     permissions = ('compute.instances.getEffectiveFirewalls',)
+#     permissions = ('resourcemanager.projects.getIamPolicy',)
 
     def get_client(self, session, model):
         return session.client(

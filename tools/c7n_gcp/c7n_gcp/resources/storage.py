@@ -29,16 +29,6 @@ class Bucket(QueryResourceManager):
                 'get', {'bucket': resource_info['bucket_name']})
 
 
-@Bucket.filter_registry.register('iam-policy')
-class BucketIamPolicyFilter(IamPolicyFilter):
-    """
-    Overrides the base implementation to process bucket resources correctly.
-    """
-    def _verb_arguments(self, resource):
-        verb_arguments = {"bucket": resource["name"]}
-        return verb_arguments
-
-
 @Bucket.action_registry.register('set-uniform-access')
 class BucketLevelAccess(MethodAction):
     '''Uniform access disables object ACLs on a bucket.

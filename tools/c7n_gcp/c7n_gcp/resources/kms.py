@@ -102,16 +102,6 @@ class KmsCryptoKey(ChildResourceManager):
             return client.execute_command('get', {'name': name})
 
 
-@KmsCryptoKey.filter_registry.register('iam-policy')
-class KmsCryptokeyIamPolicyFilter(IamPolicyFilter):
-    """
-    Overrides the base implementation to process KMS Cryptokey resources correctly.
-    """
-    def _verb_arguments(self, resource):
-        verb_arguments = SetIamPolicy._verb_arguments(self, resource)
-        return verb_arguments
-
-
 @resources.register('kms-cryptokey-version')
 class KmsCryptoKeyVersion(ChildResourceManager):
     """GCP Resource
