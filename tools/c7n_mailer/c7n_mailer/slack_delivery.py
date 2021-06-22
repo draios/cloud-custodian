@@ -79,8 +79,10 @@ class SlackDelivery:
 
                     if last_owner != new_owner:
                         if last_owner != '':
-                            user_address = last_owner + target.split('slack://', 1)[1]
-                            resolved_addrs = self.retrieve_user_im([user_address])
+                            #check to make sure that the value that is sent in is not an email if it is then just use that email
+                            if not is_email(last_owner):
+                                last_owner = last_owner + target.split('slack://', 1)[1]
+                            resolved_addrs = self.retrieve_user_im([last_owner])
                             for address, slack_target in resolved_addrs.items():
                                 slack_messages[address] = get_rendered_jinja(
                                     slack_target, sqs_message, sub_resource_list,
@@ -92,8 +94,9 @@ class SlackDelivery:
 
 
                 if last_owner != '':
-                    user_address = last_owner + target.split('slack://', 1)[1]
-                    resolved_addrs = self.retrieve_user_im([user_address])
+                    if not is_email(last_owner):
+                        last_owner = last_owner + target.split('slack://', 1)[1]
+                    resolved_addrs = self.retrieve_user_im([last_owner])
                     for address, slack_target in resolved_addrs.items():
                         slack_messages[address] = get_rendered_jinja(
                             slack_target, sqs_message, sub_resource_list,

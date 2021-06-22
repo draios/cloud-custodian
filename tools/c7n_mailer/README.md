@@ -142,16 +142,20 @@ policies:
     resource: ebs
     filters:
      - Attachments: []
+     - type: reduce
+       group-by: tag:owner_identify_tag
     actions:
       - type: notify
         slack_template: slack
         slack_msg_color: danger
+        owner_tag: owner_identify_tag
         to:
           - slack://owners
           - slack://foo@bar.com
           - slack://#custodian-test
           - slack://webhook/#c7n-webhook-test
           - slack://tag/resource_tag
+          - slack://@email.com
           - https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
         transport:
           type: sqs
@@ -182,8 +186,38 @@ Slack integration for the mailer supports several flavors of messaging, listed b
 |             Yes             | `slack://#custodian-test`                                                       | string | Send to the Slack channel indicated in string, i.e. #custodian-test                                                                                             |
 |             No              | `slack://webhook/#c7n-webhook-test`                                             | string | **(DEPRECATED)** Send to a Slack webhook; appended with the target channel. **IMPORTANT**: *This requires a `slack_webhook` value defined in the `mailer.yml`.* |
 |             Yes             | `slack://tag/resource-tag`                                                      | string | Send to target found in resource tag. Example of value in tag: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX                    |
+|             Yes             | `slack://@email.com`                                                            | string | Will privatly message the owner of that their specific resources **IMPORTANT** this does require the `owner_tag`                                                |
 
-Slack delivery can also be set via a resource's tag name. For example, using "slack://tag/slack_channel" will look for a tag name of 'slack_channel', and if matched on a resource will deliver the message to the value of that resource's tag:
+Slack delivery can also be set via a resource's tag name. For example, using "slack://tag/slack_channel" will look for a tag name of 'slack_channel', and if matched on a resource will deliver the message to the value of the first resource with that tag:
+
+Using the the slack `@email.com` notification. This one is very useful for notifiying all users of their indivual items in AWS that are not in line with the policies. It is very important if you use this that the reduce filter uses the same tag as the notificaion.
+Here is a simple example of how it works. First you could have a main notification sent to a channel that sends the following it will do this by linking the value of the `owner_tag` to the front of the @email.com
+
+```
+Custodian Violations
+Owner: Tom      Resouce: Tom_EC2_instance1
+Owner: Tom      Resouce: Tom_EC2_instance2
+Owner: Bill     Resouce: Bill_EC2_instance1
+```
+
+Now Bill and Tom are not in the custdian violation channel so using the -slack://@email.com notification this is what each of Tom and Bill will see in a private message.
+
+**Tom**
+```
+Custodian Violation
+Owner: Tom      Resouce: Tom_EC2_instance1
+Owner: Tom      Resouce: Tom_EC2_instance2
+```
+
+**Bill**
+```
+Custodian Violation
+Owner: Bill     Resouce: Bill_EC2_instance1
+```
+
+
+
+
 
 `slack_channel:https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX`
 
