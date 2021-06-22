@@ -32,6 +32,7 @@ azure-mgmt-datalake-store==1.0.0
 azure-mgmt-dns==8.0.0b1
 azure-mgmt-eventgrid==8.0.0
 azure-mgmt-eventhub==8.0.0
+azure-mgmt-frontdoor==1.0.0
 azure-mgmt-hdinsight==7.0.0
 azure-mgmt-iothub==1.0.0
 azure-mgmt-keyvault==8.0.0
@@ -41,14 +42,16 @@ azure-mgmt-monitor==2.0.0
 azure-mgmt-msi==1.0.0
 azure-mgmt-network==17.1.0
 azure-mgmt-policyinsights==1.0.0
-azure-mgmt-rdbms==8.0.0
+azure-mgmt-rdbms==8.1.0
 azure-mgmt-redis==12.0.0
 azure-mgmt-resource==16.1.0
 azure-mgmt-resourcegraph==7.0.0
 azure-mgmt-search==8.0.0
+azure-mgmt-servicefabric==1.0.0
 azure-mgmt-sql==1.0.0
 azure-mgmt-storage==17.1.0
 azure-mgmt-subscription==1.0.0
+azure-mgmt-trafficmanager==0.51.0
 azure-mgmt-web==2.0.0
 azure-nspkg==3.0.2
 azure-storage-blob==12.8.1
