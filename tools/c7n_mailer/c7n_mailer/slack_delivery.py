@@ -33,76 +33,33 @@ class SlackDelivery:
         # Check for Slack targets in 'to' action and render appropriate template.
         for target in sqs_message.get('action', ()).get('to'):
             if target == 'slack://owners':
-                to_addrs_to_resources_map = \
-                    self.email_handler.get_email_to_addrs_to_resources_map(sqs_message)
-                for to_addrs, resources in to_addrs_to_resources_map.items():
+                target_tag = sqs_message.get('action', ()).get('owner_tag')
+                resource_groups = {}
+                for resource_item in resource_list:
+                    new_owner = ''
+                    for t in resource_item.get('Tags'):
+                        if t.get('Key') == target_tag:
+                            new_owner = t.get('Value')
+                    if not "@" in new_owner:
+                        new_owner = new_owner +  sqs_message.get('action', ()).get('default_email')
 
-                    resolved_addrs = self.retrieve_user_im(list(to_addrs))
-
-                    if not resolved_addrs:
-                        continue
-
+                    if not new_owner in resource_groups.keys():
+                        resource_groups[new_owner] = [resource_item]
+                    else:
+                        resource_groups.get(new_owner).append(resource_item)
+                for list_owner, value in resource_groups.items():
+                    resolved_addrs = self.retrieve_user_im([list_owner])
                     for address, slack_target in resolved_addrs.items():
                         slack_messages[address] = get_rendered_jinja(
-                            slack_target, sqs_message, resources,
+                            slack_target, sqs_message, value,
                             self.logger, 'slack_template', 'slack_default',
                             self.config['templates_folders'])
-                self.logger.debug(
-                    "Generating messages for recipient list produced by resource owner resolution.")
             elif target.startswith('https://hooks.slack.com/'):
                 slack_messages[target] = get_rendered_jinja(
                     target, sqs_message,
                     resource_list,
                     self.logger, 'slack_template', 'slack_default',
                     self.config['templates_folders'])
-            
-            #Written to private message individual creators of items
-            elif target.startswith('slack://@'):
-                target_tag = sqs_message.get('action', ()).get('owner_tag')
-                sub_resource_list = []
-                last_owner = ''
-
-
-                if target_tag == '':
-                    target_tag = "AutoTag_Creator"
-
-                for t in resource_list[0].get('Tags'):
-                    if t.get('Key') == target_tag:
-                        last_owner = t.get('Value')
-
-                for resource_item in resource_list:
-                    new_owner = ''
-                    for t in resource_item.get('Tags'):
-                        if t.get('Key') == target_tag:
-                            new_owner = t.get('Value')
-
-
-                    if last_owner != new_owner:
-                        if last_owner != '':
-                            #check to make sure that the value that is sent in is not an email if it is then just use that email
-                            if not is_email(last_owner):
-                                last_owner = last_owner + target.split('slack://', 1)[1]
-                            resolved_addrs = self.retrieve_user_im([last_owner])
-                            for address, slack_target in resolved_addrs.items():
-                                slack_messages[address] = get_rendered_jinja(
-                                    slack_target, sqs_message, sub_resource_list,
-                                    self.logger, 'slack_template', 'slack_default',
-                                    self.config['templates_folders'])
-                        sub_resource_list = []
-                        last_owner = new_owner
-                    sub_resource_list.append(resource_item)
-
-
-                if last_owner != '':
-                    if not is_email(last_owner):
-                        last_owner = last_owner + target.split('slack://', 1)[1]
-                    resolved_addrs = self.retrieve_user_im([last_owner])
-                    for address, slack_target in resolved_addrs.items():
-                        slack_messages[address] = get_rendered_jinja(
-                            slack_target, sqs_message, sub_resource_list,
-                            self.logger, 'slack_template', 'slack_default',
-                            self.config['templates_folders'])
-                    
             elif target.startswith('slack://webhook/#') and self.config.get('slack_webhook'):
                 webhook_target = self.config.get('slack_webhook')
                 slack_messages[webhook_target] = get_rendered_jinja(
