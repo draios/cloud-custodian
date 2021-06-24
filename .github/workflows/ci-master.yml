@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - AWS-private-owner-messaging
   pull_request:
     branches:
       - master

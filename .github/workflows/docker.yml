@@ -3,6 +3,7 @@ name: "Docker Build"
 on:
   push:
     branches:
+      - AWS-private-owner-messaging
       - master
     tags:
       # todo: update for 1.0
