@@ -25,6 +25,8 @@ from c7n.resolver import ValuesFrom
 from c7n.utils import set_annotation, type_schema, parse_cidr, parse_date
 from c7n.manager import iter_filters
 
+logger = logging.getLogger(__name__)
+
 
 class FilterValidationError(Exception):
     pass
@@ -64,6 +66,22 @@ def operator_ni(x, y):
     return x not in y
 
 
+def contains_regex(value_list, regex):
+    """Iterate through a list of strings and return True if a string matches regex"""
+    for value in value_list:
+        if regex_match(value, regex):
+            return True
+    return False
+
+
+def substring_in(substr, value_list):
+    """Iterate through a list of strings and return True if a string contains substr"""
+    for value in value_list:
+        if substr in value:
+            return True
+    return False
+
+
 def contains_subset_list(list_of_lists, sublist):
     """Iterate through a list of lists and return True if a list contains sublist"""
     sublist = set(sublist)
@@ -101,7 +119,9 @@ OPERATORS = {
     'in': operator_in,
     'ni': operator_ni,
     'not-in': operator_ni,
+    'substr-in': substring_in,
     'contains': operator.contains,
+    'contains-regex': contains_regex,
     'contains-subset-list': contains_subset_list,
     'difference': difference,
     'intersect': intersect}
