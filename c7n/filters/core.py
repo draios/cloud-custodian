@@ -64,6 +64,16 @@ def operator_ni(x, y):
     return x not in y
 
 
+def contains_subset_list(list_of_lists, sublist):
+    """Iterate through a list of lists and return True if a list contains sublist"""
+    sublist = set(sublist)
+    for l in list_of_lists:
+        lSet = set(l)
+        if sublist.issubset(lSet):
+            return True
+    return False
+
+
 def difference(x, y):
     return bool(set(x).difference(y))
 
@@ -92,6 +102,7 @@ OPERATORS = {
     'ni': operator_ni,
     'not-in': operator_ni,
     'contains': operator.contains,
+    'contains-subset-list': contains_subset_list,
     'difference': difference,
     'intersect': intersect}
 

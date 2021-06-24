@@ -40,6 +40,7 @@ pip-wheel-metadata/
 pyvenv.cfg
 junit
 /.vs
+.vscode/tasks.json
 # these files get copied/generated during doc builds
 docs/source/overview\.rst
 docs/source/tools/*\.md
