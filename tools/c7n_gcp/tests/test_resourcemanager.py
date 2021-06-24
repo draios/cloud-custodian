@@ -306,3 +306,27 @@ class ProjectTest(BaseTest):
         actual_bindings = client.execute_query('getIamPolicy', get_iam_policy_params)
         expected_bindings[0]['members'].append('user:mediapills@gmail.com')
         self.assertEqual(actual_bindings['bindings'], expected_bindings)
+
+    def test_project_iam_policy_filter(self):
+        factory = self.replay_flight_data('project_iam_policy')
+        p = self.load_policy({
+            'name': 'resource',
+            'resource': 'gcp.project',
+            'filters': [{
+                'type': 'iam-policy',
+                'key': 'bindings[*].members[]',
+                'op': 'contains',
+                'value': 'user:abc@gmail.com'
+            }]},
+            session_factory=factory)
+        resources = p.run()
+        self.assertEqual(len(resources), 3)
+
+        for resource in resources:
+            self.assertTrue('iamPolicy' in resource)
+            bindings = resource['iamPolicy']['bindings']
+            members = set()
+            for binding in bindings:
+                for member in binding['members']:
+                    members.add(member)
+            self.assertTrue('user:abc@gmail.com' in members)
