@@ -33,12 +33,12 @@ class SlackDelivery:
         # Check for Slack targets in 'to' action and render appropriate template.
         for target in sqs_message.get('action', ()).get('to'):
             if target == 'slack://owners':
-                #target_tags = sqs_message.get('action', ()).get('owner_tag')
+                # target_tags = sqs_message.get('action', ()).get('owner_tag')
                 target_tags = self.config.get('contact_tags', [])
                 resource_groups = {}
                 for resource_item in resource_list:
                     owner_tag_found = False
-                    #Look through the tags that exist in the config file for owners
+                    # Look through the tags that exist in the config file for owners
                     for target_tag in target_tags:
                         new_owner = ''
                         for t in resource_item.get('Tags'):
@@ -46,24 +46,26 @@ class SlackDelivery:
                                 new_owner = t.get('Value')
                         if not new_owner == '':
                             owner_tag_found = True
-                            #check that there is a valid email for the user if not add it to the default email
-                            if not "@" in new_owner:
-                                new_owner = new_owner +  sqs_message.get('action', ()).get('default_email')
-                            if not new_owner in resource_groups.keys():
+                            # check that there is a valid email for the user if not 
+                            # add it to the default email
+                            if "@" not in new_owner:
+                                default_email = sqs_message.get('action', ()).get('default_email')
+                                new_owner = new_owner + default_email
+                            if new_owner not in resource_groups.keys():
                                 resource_groups[new_owner] = [resource_item]
                             else:
-                                #This prevents double messages to the same person
+                                # This prevents double messages to the same person
                                 if not resource_item in resource_groups.get(new_owner):
                                     resource_groups.get(new_owner).append(resource_item)
-                    #if no owner tag is present use the default messaging that was set. 
+                    # if no owner tag is present use the default messaging that was set. 
                     if not owner_tag_found:
-                        for owner_absent_contact in sqs_message.get('action', ()).get('owner_absent_contact'):
-                            if not owner_absent_contact in resource_groups.keys():
-                                    resource_groups[owner_absent_contact] = [resource_item]
+                        for owner_absent in sqs_message.get('action', ()).get('owner_absent_contact'):
+                            if owner_absent not in resource_groups.keys():
+                                    resource_groups[owner_absent] = [resource_item]
                             else:
-                                if not resource_item in resource_groups.get(owner_absent_contact):
-                                    resource_groups.get(owner_absent_contact).append(resource_item)
-                #loop through all the values and send them off to the owners
+                                if resource_item not in resource_groups.get(owner_absent):
+                                    resource_groups.get(owner_absent).append(resource_item)
+                # loop through all the values and send them off to the owners
                 for list_owner, value in resource_groups.items():
                     resolved_addrs = self.retrieve_user_im([list_owner])
                     for address, slack_target in resolved_addrs.items():
