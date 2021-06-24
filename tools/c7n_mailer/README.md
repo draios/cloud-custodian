@@ -142,13 +142,10 @@ policies:
     resource: ebs
     filters:
      - Attachments: []
-     - type: reduce
-       group-by: tag:owner_identify_tag
     actions:
       - type: notify
         slack_template: slack
         slack_msg_color: danger
-        owner_tag: owner_identify_tag
         to:
           - slack://owners
           - slack://foo@bar.com
