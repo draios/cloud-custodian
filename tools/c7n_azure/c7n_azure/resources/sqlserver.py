@@ -136,6 +136,60 @@ class AzureADAdministratorsFilter(ValueFilter):
 
         return super(AzureADAdministratorsFilter, self).__call__(i['properties']['administrators'])
 
+@SqlServer.filter_registry.register('azure-auditing-policy')
+class AzureServerAuditingFilter(ValueFilter):
+    """
+    Provides a value filter targeting the auditing policy of this
+    SQL Server.
+
+    Here is an example of the available fields:
+
+    .. code-block:: json
+
+      "state": "Enabled",
+      "storageEndpoint": "https://yourstorageendpoint.blob.core.windows.net/",
+      "retentionDays": 0,
+      "auditActionsAndGroups": [
+          "SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP",
+          "FAILED_DATABASE_AUTHENTICATION_GROUP",
+          "BATCH_COMPLETED_GROUP"
+        ]
+
+    :examples:
+
+    Find SQL Servers with failed database login auditing enabled
+
+    .. code-block:: yaml
+
+        policies:
+          - name: sqlserver--failed-login-audit
+            resource: azure.sqlserver
+            filters:
+              - type: azure-auditing-policy
+                key: "auditActionsAndGroups"
+                op: contains
+                value: "FAILED_DATABASE_AUTHENTICATION_GROUP"
+
+    """
+
+    schema = type_schema('azure-auditing-policy', rinherit=ValueFilter.schema)
+
+    def __call__(self, i):
+        if 'auditing_policy' not in i['properties']:
+            client = self.manager.get_client()
+            auditing_policy = list(
+                client.server_blob_auditing_policies
+                .list_by_server(i['resourceGroup'], i['name'])
+            )
+            
+            if auditing_policy:
+                i['properties']['auditing_policy'] = \
+                    auditing_policy[0].serialize(True).get('properties', {})
+            else:
+                i['properties']['auditing_policy'] = {}
+
+        return super(AzureServerAuditingFilter, self).__call__(i['properties']['auditing_policy'])
+
 
 @SqlServer.filter_registry.register('vulnerability-assessment')
 class VulnerabilityAssessmentFilter(Filter):
