@@ -50,6 +50,7 @@ ResourceMap = {
     "azure.sqlserver": "c7n_azure.resources.sqlserver.SqlServer",
     "azure.storage": "c7n_azure.resources.storage.Storage",
     "azure.storage-container": "c7n_azure.resources.storage_container.StorageContainer",
+    "azure.storage-blob-services": "c7n_azure.resources.storage.StorageBlobServices",
     "azure.subscription": "c7n_azure.resources.subscription.Subscription",
     "azure.vm": "c7n_azure.resources.vm.VirtualMachine",
     "azure.vmss": "c7n_azure.resources.vmss.VMScaleSet",

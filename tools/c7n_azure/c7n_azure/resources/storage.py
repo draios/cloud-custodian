@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
+from tools.c7n_azure.c7n_azure.query import ChildTypeInfo
 
 from azure.cosmosdb.table import TableService
 from azure.mgmt.storage.models import (IPRule, NetworkRuleSet,
@@ -25,6 +26,8 @@ from c7n_azure.storage_utils import StorageUtilities
 from c7n_azure.utils import ThreadHelper, serialize
 from netaddr import IPSet
 
+from c7n_azure.resources.arm import ChildArmResourceManager
+from msrestazure.tools import parse_resource_id
 
 @resources.register('storage')
 class Storage(ArmResourceManager):
@@ -550,3 +553,62 @@ class RequireSecureTransferAction(AzureBaseAction):
             resource['name'],
             StorageAccountUpdateParameters(enable_https_traffic_only=self.data.get('value'))
         )
+
+@resources.register('storage-blob-services')
+class StorageBlobServices(ChildArmResourceManager):
+    """Storage Container Resource
+
+    :example:
+
+    Finds all containers with public access enabled
+
+    .. code-block:: yaml
+
+        policies:
+          - name: storage-container-public
+            description: |
+              Find all containers with public access enabled
+            resource: azure.storage-container
+            filters:
+              - type: value
+                key: properties.publicAccess
+                op: not-equal
+                value: None   # Possible values: Blob, Container, None
+    """
+
+    class resource_type(ChildTypeInfo):
+        doc_groups = ['Storage']
+        service = 'azure.mgmt.storage'
+        client = 'StorageManagementClient'
+        enum_spec = ('blob_services', 'list', None)
+        parent_manager_name = 'storage'
+        diagnostic_settings_enabled = False
+        resource_type = 'Microsoft.Storage/storageAccounts/blobServices'
+        raise_on_exception = False
+        default_report_fields = (
+            'name',
+            'deleteRetentionPolicy',
+            'isVersioningEnabled',
+            'restorePolicy',
+            'containerDeleteRetentionPolicy',
+            '"c7n:parent-id"'
+        )
+
+        @classmethod
+        def extra_args(cls, parent_resource):
+            return {'resource_group_name': parent_resource['resourceGroup'],
+                    'account_name': parent_resource['name']}
+
+    # def get_resources(self, resource_ids):
+    #     client = self.get_client()
+    #     data = [
+    #         self.get_storage_container(rid, client)
+    #         for rid in resource_ids
+    #     ]
+    #     return self.augment([r.serialize(True) for r in data])
+
+    # def get_storage_container(self, resource_id, client):
+    #     parsed = parse_resource_id(resource_id)
+    #     return client.blob_containers.get(parsed.get('resource_group'),
+    #                                       parsed.get('name'),             # Account name
+    #                                       parsed.get('resource_name'))    # Container name
