@@ -46,7 +46,7 @@ class SlackDelivery:
                                 new_owner = t.get('Value')
                         if not new_owner == '':
                             owner_tag_found = True
-                            # check that there is a valid email for the user if not 
+                            # check that there is a valid email for the user if not
                             # add it to the default email
                             if "@" not in new_owner:
                                 default_email = sqs_message.get('action', ()).get('default_email')
@@ -55,16 +55,16 @@ class SlackDelivery:
                                 resource_groups[new_owner] = [resource_item]
                             else:
                                 # This prevents double messages to the same person
-                                if not resource_item in resource_groups.get(new_owner):
+                                if resource_item not in resource_groups.get(new_owner):
                                     resource_groups.get(new_owner).append(resource_item)
-                    # if no owner tag is present use the default messaging that was set. 
+                    # if no owner tag is present use the default messaging that was set.
                     if not owner_tag_found:
-                        for owner_absent in sqs_message.get('action', ()).get('owner_absent_contact'):
-                            if owner_absent not in resource_groups.keys():
-                                    resource_groups[owner_absent] = [resource_item]
+                        for owner_ab in sqs_message.get('action', ()).get('owner_absent_contact'):
+                            if owner_ab not in resource_groups.keys():
+                                resource_groups[owner_ab] = [resource_item]
                             else:
-                                if resource_item not in resource_groups.get(owner_absent):
-                                    resource_groups.get(owner_absent).append(resource_item)
+                                if resource_item not in resource_groups.get(owner_ab):
+                                    resource_groups.get(owner_ab).append(resource_item)
                 # loop through all the values and send them off to the owners
                 for list_owner, value in resource_groups.items():
                     resolved_addrs = self.retrieve_user_im([list_owner])
