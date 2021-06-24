@@ -33,5 +33,6 @@
    {%- if not recipient.startswith('https://') %}
    "channel":"{{ recipient }}",
    {%- endif -%}
-   "username":"Custodian"
+   "username":"Custodian" {#This line determines which message system private messages are sent through#}
+   {#if it is there it will be sent though Slackbot, if it is missing it is sent through the app under the app section#}
 }
