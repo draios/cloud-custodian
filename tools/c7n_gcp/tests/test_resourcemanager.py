@@ -307,17 +307,12 @@ class ProjectTest(BaseTest):
         expected_bindings[0]['members'].append('user:mediapills@gmail.com')
         self.assertEqual(actual_bindings['bindings'], expected_bindings)
 
-<<<<<<< HEAD
     def test_project_iam_policy_filter(self):
-=======
-    def test_project_iam_user_roles(self):
->>>>>>> gcp-project-iam-user-roles-filter
         factory = self.replay_flight_data('project_iam_policy')
         p = self.load_policy({
             'name': 'resource',
             'resource': 'gcp.project',
             'filters': [{
-<<<<<<< HEAD
                 'type': 'iam-policy',
                 'key': 'bindings[*].members[]',
                 'op': 'contains',
@@ -335,25 +330,30 @@ class ProjectTest(BaseTest):
                 for member in binding['members']:
                     members.add(member)
             self.assertTrue('user:abc@gmail.com' in members)
-=======
-                'type': 'iam-user-roles',
-                'key': '[*].roles',
-                'op': 'contains',
-                'value': ["roles/owner", "roles/viewer"]
-            }]},
-            session_factory=factory)
-        resources = p.run()
-        self.assertEqual(len(resources), 1)
 
-        for resource in resources:
-            self.assertTrue('iamPolicyUserRoles' in resource)
-            isUserFound = False
-            for userRole in resource['iamPolicyUserRoles']:
-                user, roles = userRole['user'], userRole['roles']
-                if user == 'user:abc@gmail.com':
-                    isUserFound = True
-                    self.assertTrue('roles/owner' in roles)
-                    self.assertTrue('roles/viewer' in roles)
-                    break
-            self.assertTrue(isUserFound)
->>>>>>> gcp-project-iam-user-roles-filter
+    def test_project_iam_user_roles(self):
+            factory = self.replay_flight_data('project_iam_policy')
+            p = self.load_policy({
+                'name': 'resource',
+                'resource': 'gcp.project',
+                'filters': [{
+                    'type': 'iam-user-roles',
+                    'key': '[*].roles',
+                    'op': 'contains',
+                    'value': ["roles/owner", "roles/viewer"]
+                }]},
+                session_factory=factory)
+            resources = p.run()
+            self.assertEqual(len(resources), 1)
+
+            for resource in resources:
+                self.assertTrue('iamPolicyUserRoles' in resource)
+                isUserFound = False
+                for userRole in resource['iamPolicyUserRoles']:
+                    user, roles = userRole['user'], userRole['roles']
+                    if user == 'user:abc@gmail.com':
+                        isUserFound = True
+                        self.assertTrue('roles/owner' in roles)
+                        self.assertTrue('roles/viewer' in roles)
+                        break
+                self.assertTrue(isUserFound)

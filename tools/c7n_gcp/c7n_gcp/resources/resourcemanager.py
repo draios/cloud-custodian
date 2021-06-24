@@ -122,7 +122,6 @@ class Project(QueryResourceManager):
                     return {'filter': child['filter']}
 
 
-<<<<<<< HEAD
 @Project.filter_registry.register('iam-policy')
 class ProjectIamPolicyFilter(IamPolicyFilter):
     """
@@ -132,7 +131,8 @@ class ProjectIamPolicyFilter(IamPolicyFilter):
         verb_arguments = SetIamPolicy._verb_arguments(self, resource)
         verb_arguments['body'] = {}
         return verb_arguments
-=======
+
+
 @Project.filter_registry.register('iam-user-roles')
 class IamPolicyUserRoles(ValueFilter):
     """Filters a project by its IAM Policy's users and their assigned roles.
@@ -184,8 +184,7 @@ class IamPolicyUserRoles(ValueFilter):
 
     def __call__(self, r):
         return self.match(r['iamPolicyUserRoles'])
->>>>>>> gcp-project-iam-user-roles-filter
-
+        
 
 @Project.action_registry.register('delete')
 class ProjectDelete(MethodAction):
