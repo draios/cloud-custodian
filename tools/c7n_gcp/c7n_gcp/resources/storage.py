@@ -34,6 +34,7 @@ class BucketIamPolicyFilter(IamPolicyFilter):
     """
     Overrides the base implementation to process bucket resources correctly.
     """
+#     permissions = ('storage.buckets.getIamPolicy',)
     def _verb_arguments(self, resource):
         verb_arguments = {"bucket": resource["name"]}
         return verb_arguments
