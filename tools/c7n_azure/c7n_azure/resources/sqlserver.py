@@ -136,8 +136,8 @@ class AzureADAdministratorsFilter(ValueFilter):
 
         return super(AzureADAdministratorsFilter, self).__call__(i['properties']['administrators'])
 
-@SqlServer.filter_registry.register('azure-auditing-policy')
-class AzureServerAuditingFilter(ValueFilter):
+@SqlServer.filter_registry.register('auditing-policy')
+class ServerAuditingFilter(ValueFilter):
     """
     Provides a value filter targeting the auditing policy of this
     SQL Server.
@@ -162,17 +162,17 @@ class AzureServerAuditingFilter(ValueFilter):
     .. code-block:: yaml
 
         policies:
-          - name: sqlserver--failed-login-audit
+          - name: sqlserver-failed-login-audit
             resource: azure.sqlserver
             filters:
-              - type: azure-auditing-policy
+              - type: uditing-policy
                 key: "auditActionsAndGroups"
                 op: contains
                 value: "FAILED_DATABASE_AUTHENTICATION_GROUP"
 
     """
 
-    schema = type_schema('azure-auditing-policy', rinherit=ValueFilter.schema)
+    schema = type_schema('auditing-policy', rinherit=ValueFilter.schema)
 
     def __call__(self, i):
         if 'auditing_policy' not in i['properties']:
@@ -188,7 +188,7 @@ class AzureServerAuditingFilter(ValueFilter):
             else:
                 i['properties']['auditing_policy'] = {}
 
-        return super(AzureServerAuditingFilter, self).__call__(i['properties']['auditing_policy'])
+        return super(ServerAuditingFilter, self).__call__(i['properties']['auditing_policy'])
 
 
 @SqlServer.filter_registry.register('vulnerability-assessment')
