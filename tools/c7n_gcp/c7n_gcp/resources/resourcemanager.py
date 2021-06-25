@@ -126,7 +126,7 @@ class ProjectIamPolicyFilter(IamPolicyFilter):
     """
     Overrides the base implementation to process Project resources correctly.
     """
-    #     permissions = ('resourcemanager.projects.getIamPolicy',)
+    permissions = ('resourcemanager.projects.getIamPolicy',)
     def _verb_arguments(self, resource):
         verb_arguments = SetIamPolicy._verb_arguments(self, resource)
         verb_arguments['body'] = {}

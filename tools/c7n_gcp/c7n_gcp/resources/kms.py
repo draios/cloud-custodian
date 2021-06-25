@@ -107,7 +107,8 @@ class KmsCryptokeyIamPolicyFilter(IamPolicyFilter):
     """
     Overrides the base implementation to process KMS Cryptokey resources correctly.
     """
-#     permissions = ('cloudkms.cryptoKeys.*',cloudkms.importJons.*, cloudkms.keyRings.*, cloudkms.locations.*, resourcemanager.projects.get)
+    permissions = ('cloudkms.cryptoKeys.*','cloudkms.importJons.*', 'cloudkms.keyRings.*',
+    'cloudkms.locations.*', 'resourcemanager.projects.get')
     def _verb_arguments(self, resource):
         verb_arguments = SetIamPolicy._verb_arguments(self, resource)
         return verb_arguments
