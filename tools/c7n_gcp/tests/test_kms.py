@@ -149,6 +149,7 @@ class KmsCryptoKeyTest(BaseTest):
         p = self.load_policy(
             {'name': 'resource',
              'resource': 'gcp.kms-cryptokey',
+             'query': [{'location': 'global'}],
              'filters': [{
                  'type': 'iam-policy',
                  'key': 'bindings[*].members[]',

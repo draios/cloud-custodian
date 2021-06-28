@@ -13,7 +13,7 @@
     "status": "200",
     "content-length": "179",
     "-content-encoding": "gzip",
-    "content-location": "https://cloudkms.googleapis.com/v1/projects/qa-onprem/locations/global/keyRings/cloud-custodian-test/cryptoKeys/test1:getIamPolicy?alt=json"
+    "content-location": "https://cloudkms.googleapis.com/v1/projects/custodian/locations/global/keyRings/cloud-custodian-test/cryptoKeys/test1:getIamPolicy?alt=json"
   },
   "body": {
     "version": 1,
