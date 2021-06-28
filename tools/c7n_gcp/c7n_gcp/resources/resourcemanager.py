@@ -7,6 +7,7 @@ from c7n_gcp.actions import SetIamPolicy, MethodAction
 from c7n_gcp.provider import resources
 from c7n_gcp.query import QueryResourceManager, TypeInfo
 
+from c7n.filters.core import ValueFilter
 from c7n.resolver import ValuesFrom
 from c7n.utils import type_schema, local_session
 
@@ -118,6 +119,60 @@ class Project(QueryResourceManager):
             for child in self.data.get('query'):
                 if 'filter' in child:
                     return {'filter': child['filter']}
+
+
+@Project.filter_registry.register('iam-member-roles')
+class IamPolicyMemberRoles(ValueFilter):
+    """Filters a project by its IAM policy's member types and their assigned roles.
+
+    :example:
+
+    Filter all projects where at least one service account is assigned the owner role
+
+    .. code-block :: yaml
+
+       policies:
+        - name: gcp-iam-member-roles
+          resource: gcp.project
+          filters:
+            - type: iam-member-roles
+              key: "serviceAccount"
+              op: contains
+              value: "roles/owner"
+    """
+
+    MEMBER_TYPES = ["user", "group", "serviceAccount", "domain"]
+    schema = type_schema('iam-member-roles', rinherit=ValueFilter.schema)
+#     permissions = ('compute.instances.getEffectiveFirewalls',)
+
+    def get_client(self, session, model):
+        return session.client(
+            model.service, model.version, model.component)
+
+    def process(self, resources, event=None):
+        model = self.manager.get_model()
+        session = local_session(self.manager.session_factory)
+        client = self.get_client(session, model)
+
+        for r in resources:
+            iam_policy = client.execute_command('getIamPolicy', {"resource": r["projectId"]})
+            r["iamPolicyMemberRoles"] = {}
+            memberToRoleMap = {m_type: set() for m_type in IamPolicyMemberRoles.MEMBER_TYPES}
+
+            for b in iam_policy["bindings"]:
+                role, members = b["role"], b["members"]
+                for m_name in members:
+                    for m_type in IamPolicyMemberRoles.MEMBER_TYPES:
+                        if m_type in m_name:
+                            memberToRoleMap[m_type].add(role)
+                            break
+            for m_type, roles in memberToRoleMap.items():
+                r["iamPolicyMemberRoles"][m_type] = list(roles)
+
+        return super(IamPolicyMemberRoles, self).process(resources)
+
+    def __call__(self, r):
+        return self.match(r['iamPolicyMemberRoles'])
 
 
 @Project.action_registry.register('delete')

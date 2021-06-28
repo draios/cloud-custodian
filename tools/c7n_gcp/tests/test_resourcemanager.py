@@ -306,3 +306,25 @@ class ProjectTest(BaseTest):
         actual_bindings = client.execute_query('getIamPolicy', get_iam_policy_params)
         expected_bindings[0]['members'].append('user:mediapills@gmail.com')
         self.assertEqual(actual_bindings['bindings'], expected_bindings)
+    
+    def test_project_iam_member_roles(self):
+        factory = self.replay_flight_data('project-iam-policy')
+        p = self.load_policy({
+            'name': 'resource',
+            'resource': 'gcp.project',
+            'filters': [{
+                'type': 'iam-member-roles',
+                'key': 'serviceAccount',
+                'op': 'intersect',
+                'value': ["roles/owner", "roles/admin", "roles/editor"]
+            }]},
+            session_factory=factory)
+        resources = p.run()
+        self.assertEqual(len(resources), 2)
+
+        for resource in resources:
+            self.assertTrue('iamPolicyMemberRoles' in resource)
+            serviceAccountRoles = resource['iamPolicyMemberRoles']['serviceAccount']
+            self.assertTrue('roles/owner' in serviceAccountRoles or
+             'roles/admin' in serviceAccountRoles or
+             'roles/editor' in serviceAccountRoles)
