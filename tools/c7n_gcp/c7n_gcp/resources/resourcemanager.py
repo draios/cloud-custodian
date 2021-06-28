@@ -123,7 +123,6 @@ class Project(QueryResourceManager):
                     return {'filter': child['filter']}
 
 
-<<<<<<< HEAD
 @Project.filter_registry.register('iam-policy')
 class ProjectIamPolicyFilter(IamPolicyFilter):
     """
@@ -142,44 +141,21 @@ class IamPolicyUserRoles(ValueFilter):
     :example:
 
     Filter all projects where the user test123@gmail.com is assigned the owner role
-=======
-@Project.filter_registry.register('iam-member-roles')
-class IamPolicyMemberRoles(ValueFilter):
-    """Filters a project by its IAM policy's member types and their assigned roles.
-
-    :example:
-
-    Filter all projects where at least one service account is assigned the owner role
->>>>>>> gcp-project-iam-member-roles-filter
 
     .. code-block :: yaml
 
        policies:
-<<<<<<< HEAD
         - name: gcp-iam-user-roles
           resource: gcp.project
           filters:
             - type: iam-user-roles
               key: "user:test123@gmail.com"
-=======
-        - name: gcp-iam-member-roles
-          resource: gcp.project
-          filters:
-            - type: iam-member-roles
-              key: "serviceAccount"
->>>>>>> gcp-project-iam-member-roles-filter
               op: contains
               value: "roles/owner"
     """
 
-<<<<<<< HEAD
     schema = type_schema('iam-user-roles', rinherit=ValueFilter.schema)
 #     permissions = ('resourcemanager.projects.getIamPolicy',)
-=======
-    MEMBER_TYPES = ["user", "group", "serviceAccount", "domain"]
-    schema = type_schema('iam-member-roles', rinherit=ValueFilter.schema)
-#     permissions = ('compute.instances.getEffectiveFirewalls',)
->>>>>>> gcp-project-iam-member-roles-filter
 
     def get_client(self, session, model):
         return session.client(
@@ -192,7 +168,6 @@ class IamPolicyMemberRoles(ValueFilter):
 
         for r in resources:
             iam_policy = client.execute_command('getIamPolicy', {"resource": r["projectId"]})
-<<<<<<< HEAD
             r["iamPolicyUserRoles"] = []
             userToRolesMap = {}
 
@@ -211,7 +186,42 @@ class IamPolicyMemberRoles(ValueFilter):
     def __call__(self, r):
         return self.match(r['iamPolicyUserRoles'])
         
-=======
+
+@Project.filter_registry.register('iam-member-roles')
+class IamPolicyMemberRoles(ValueFilter):
+    """Filters a project by its IAM policy's member types and their assigned roles.
+
+    :example:
+
+    Filter all projects where at least one service account is assigned the owner role
+
+    .. code-block :: yaml
+
+       policies:
+        - name: gcp-iam-member-roles
+          resource: gcp.project
+          filters:
+            - type: iam-member-roles
+              key: "serviceAccount"
+              op: contains
+              value: "roles/owner"
+    """
+
+    MEMBER_TYPES = ["user", "group", "serviceAccount", "domain"]
+    schema = type_schema('iam-member-roles', rinherit=ValueFilter.schema)
+#     permissions = ('compute.instances.getEffectiveFirewalls',)
+
+    def get_client(self, session, model):
+        return session.client(
+            model.service, model.version, model.component)
+
+    def process(self, resources, event=None):
+        model = self.manager.get_model()
+        session = local_session(self.manager.session_factory)
+        client = self.get_client(session, model)
+
+        for r in resources:
+            iam_policy = client.execute_command('getIamPolicy', {"resource": r["projectId"]})
             r["iamPolicyMemberRoles"] = {}
             memberToRoleMap = {m_type: set() for m_type in IamPolicyMemberRoles.MEMBER_TYPES}
 
@@ -230,7 +240,6 @@ class IamPolicyMemberRoles(ValueFilter):
     def __call__(self, r):
         return self.match(r['iamPolicyMemberRoles'])
 
->>>>>>> gcp-project-iam-member-roles-filter
 
 @Project.action_registry.register('delete')
 class ProjectDelete(MethodAction):
