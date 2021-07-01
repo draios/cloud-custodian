@@ -31,6 +31,7 @@ ResourceMap = {
     "azure.keyvault-key": "c7n_azure.resources.key_vault_keys.KeyVaultKeys",
     "azure.keyvault-keys": "c7n_azure.resources.key_vault_keys.KeyVaultKeys",
     "azure.loadbalancer": "c7n_azure.resources.load_balancer.LoadBalancer",
+    "azure.monitor": "c7n_azure.resources.monitor.Monitor",
     "azure.networkinterface": "c7n_azure.resources.network_interface.NetworkInterface",
     "azure.networksecuritygroup": "c7n_azure.resources.network_security_group.NetworkSecurityGroup",
     "azure.policyassignments": "c7n_azure.resources.policy_assignments.PolicyAssignments",
