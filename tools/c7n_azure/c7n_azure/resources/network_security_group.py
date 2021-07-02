@@ -1,18 +1,21 @@
 # Copyright The Cloud Custodian Authors.
 # SPDX-License-Identifier: Apache-2.0
 
+import logging
 import uuid
 
 from c7n_azure.provider import resources
 from c7n_azure.resources.arm import ArmResourceManager
 from c7n_azure.utils import StringUtils, PortsRangeHelper
 from azure.core.exceptions import AzureError
+from c7n_azure.utils import ThreadHelper
 
 from c7n.actions import BaseAction
 from c7n.filters import Filter, FilterValidationError
 from c7n.filters.core import PolicyValidationError
 from c7n.utils import type_schema
 
+log = logging.getLogger('custodian.azure.network_security_group')
 
 @resources.register('networksecuritygroup')
 class NetworkSecurityGroup(ArmResourceManager):
@@ -199,6 +202,117 @@ class IngressFilter(NetworkSecurityGroupFilter):
 class EgressFilter(NetworkSecurityGroupFilter):
     direction_key = 'Outbound'
     schema = type_schema('egress', rinherit=NetworkSecurityGroupFilter.schema)
+
+
+@NetworkSecurityGroup.filter_registry.register('security-rule')
+class SecurityRuleFilter(Filter):
+    """
+    Filter NSG's by a security rule.
+
+    :example:
+
+    Find NSG's allowing RDP access over the internet.
+
+    .. code-block:: yaml
+
+        policies:
+          - name: networksecuritygroup-rdp-access
+            resource: azure.networksecuritygroup
+            filters:
+              - type: security-rule
+                access: "Allow"
+                destinationPortRange: 
+                    -"3389"
+                    -"*"
+                    -"contains:3389"
+                direction: "Inbound"
+                protocol: "TCP"
+                sourceAddressPrefix: 
+                    -"*"
+                    -"0.0.0.0"
+                    -"<nw>/0"
+                    -"/0"
+                    "internet"
+                    "any"
+
+    """
+
+    schema = type_schema(
+        'security-rule',
+        protocol={'type': 'string'},
+        sourcePortRange={'type': 'string'},
+        destinationPortRange={'type': 'string'},
+        sourceAddressPrefix={'type': 'string'},
+        # sourceAddressPrefixes={'type': 'array'},
+        destinationAddressPrefix={'type': 'string'},
+        # destinationAddressPrefixes={'type': 'array'},
+        # sourcePortRanges={'type': 'array'},
+        # destinationPortRanges={'type': 'array'},
+        access={'type': 'string'},
+        priority={'type': 'number'},
+        direction={'type': 'string'},
+        provisioningState={'type': 'string'},
+        includeDefaultRules={'type': 'boolean'}
+        )
+
+    log = logging.getLogger('custodian.azure.network_security_group.security-rule')
+
+    def __init__(self, data, manager=None):
+        super(SecurityRuleFilter, self).__init__(data, manager)
+        # self.protocol = self.data.get('protocol', None)
+        # self.sourcePortRange = self.data.get('sourcePortRange', None)
+        # self.destinationPortRange = self.data.get('destinationPortRange', None)
+        # self.sourceAddressPrefix = self.data.get('sourceAddressPrefix', None)
+        # self.sourceAddressPrefixes = self.data.get('sourceAddressPrefixes', None)
+        # self.destinationAddressPrefix = self.data.get('destinationAddressPrefix', None)
+        # self.destinationAddressPrefixes = self.data.get('destinationAddressPrefixes', None)
+        # self.sourcePortRanges = self.data.get('sourcePortRanges', None)
+        # self.destinationPortRanges = self.data.get('destinationPortRanges', None)
+        # self.access = self.data.get('access', None)
+        # self.priority = self.data.get('priority', None)
+        # self.direction = self.data.get('direction', None)
+        # self.provisioningState = self.data.get('provisioningState', None)
+        # self.includeDefaultRules = self.data.get('includeDefaultRules', False)
+
+    def process(self, resources, event=None):
+        resources, exceptions = ThreadHelper.execute_in_parallel(
+            resources=resources,
+            event=event,
+            execution_method=self._process_resource_set,
+            executor_factory=self.executor_factory,
+            log=log
+        )
+        if exceptions:
+            raise exceptions[0]
+        return resources
+
+    def _process_resource_set(self, resources, event=None):
+        result = []
+        for resource in resources:
+            securityRules = resource['properties']['securityRules']
+            if not securityRules:
+                continue
+            for rule in securityRules:
+                ruleProperties = rule['properties']
+                isMatch = True
+                for condition, filterValue in self.data.items():
+                    if filterValue is None or condition == "includeDefaultRules" or condition == 'type':
+                        continue
+
+                    actualValue = ruleProperties.get(condition, None)
+                    if actualValue is None:
+                        actualValue = ruleProperties.get(condition+'s')
+                    # should users be allowed to pass in an array (i.e. sourcePortRanges) or just one value per filter, otherwise the checking gets complicated
+                    if (isinstance(actualValue, list) and filterValue not in actualValue) or filterValue != actualValue:
+                    # if (isinstance(filterValue, list) and not (set(filterValue).intersection(set(actualValue)))) \
+                    #     or filterValue != actualValue \
+                    #         or 
+                            isMatch = False
+                            break
+                if isMatch:
+                    result.append(resource)
+                    break
+        return result
 
 
 class NetworkSecurityGroupPortsAction(BaseAction):
