@@ -9,6 +9,7 @@ from c7n_azure.resources.arm import ArmResourceManager
 from c7n_azure.utils import StringUtils, PortsRangeHelper
 from azure.core.exceptions import AzureError
 from c7n_azure.utils import ThreadHelper
+from c7n.filters.core import contains_regex
 
 from c7n.actions import BaseAction
 from c7n.filters import Filter, FilterValidationError
@@ -240,11 +241,11 @@ class SecurityRuleFilter(Filter):
     schema = type_schema(
         'security-rule',
         protocol={'type': 'string'},
-        sourcePortRange={'type': 'string'},
-        destinationPortRange={'type': 'string'},
-        sourceAddressPrefix={'type': 'string'},
+        sourcePortRange={'type': 'array'},
+        destinationPortRange={'type': 'array'},
+        sourceAddressPrefix={'type': 'array'},
         # sourceAddressPrefixes={'type': 'array'},
-        destinationAddressPrefix={'type': 'string'},
+        destinationAddressPrefix={'type': 'array'},
         # destinationAddressPrefixes={'type': 'array'},
         # sourcePortRanges={'type': 'array'},
         # destinationPortRanges={'type': 'array'},
@@ -259,20 +260,6 @@ class SecurityRuleFilter(Filter):
 
     def __init__(self, data, manager=None):
         super(SecurityRuleFilter, self).__init__(data, manager)
-        # self.protocol = self.data.get('protocol', None)
-        # self.sourcePortRange = self.data.get('sourcePortRange', None)
-        # self.destinationPortRange = self.data.get('destinationPortRange', None)
-        # self.sourceAddressPrefix = self.data.get('sourceAddressPrefix', None)
-        # self.sourceAddressPrefixes = self.data.get('sourceAddressPrefixes', None)
-        # self.destinationAddressPrefix = self.data.get('destinationAddressPrefix', None)
-        # self.destinationAddressPrefixes = self.data.get('destinationAddressPrefixes', None)
-        # self.sourcePortRanges = self.data.get('sourcePortRanges', None)
-        # self.destinationPortRanges = self.data.get('destinationPortRanges', None)
-        # self.access = self.data.get('access', None)
-        # self.priority = self.data.get('priority', None)
-        # self.direction = self.data.get('direction', None)
-        # self.provisioningState = self.data.get('provisioningState', None)
-        # self.includeDefaultRules = self.data.get('includeDefaultRules', False)
 
     def process(self, resources, event=None):
         resources, exceptions = ThreadHelper.execute_in_parallel(
@@ -290,25 +277,56 @@ class SecurityRuleFilter(Filter):
         result = []
         for resource in resources:
             securityRules = resource['properties']['securityRules']
-            if not securityRules:
-                continue
             for rule in securityRules:
                 ruleProperties = rule['properties']
+                # Only need to match a single rule
                 isMatch = True
+                # Iterate over each condition value and compare with the rule's actual value
                 for condition, filterValue in self.data.items():
                     if filterValue is None or condition == "includeDefaultRules" or condition == 'type':
                         continue
-
-                    actualValue = ruleProperties.get(condition, None)
-                    if actualValue is None:
-                        actualValue = ruleProperties.get(condition+'s')
-                    # should users be allowed to pass in an array (i.e. sourcePortRanges) or just one value per filter, otherwise the checking gets complicated
-                    if (isinstance(actualValue, list) and filterValue not in actualValue) or filterValue != actualValue:
-                    # if (isinstance(filterValue, list) and not (set(filterValue).intersection(set(actualValue)))) \
-                    #     or filterValue != actualValue \
-                    #         or 
+                    actualValue = None
+                    if condition in ruleProperties:
+                        actualValue = ruleProperties[condition]
+                    # i.e. sourcePortRange vs sourcePortRanges
+                    elif condition+'s' in ruleProperties:
+                        actualValue = ruleProperties[condition+'s']
+                    # i.e. destinationAddressPrefix vs destinationAddressPrefixes
+                    elif condition+'es' in ruleProperties:
+                        actualValue = ruleProperties[condition+'es']
+                    else:
+                        raise PolicyValidationError("invalid rule parameter.")
+                    
+                    # Case 1: if comparing two lists, want to check to see if they have a common element
+                    if isinstance(filterValue, list) or isinstance(actualValue, list):
+                        filterValue = [filterValue] if not isinstance(filterValue, list) else filterValue
+                        actualValue = [actualValue] if not isinstance(actualValue, list) else actualValue
+                        # first, check to see if any direct matches
+                        if not set(filterValue).intersection(set(actualValue)):
+                            # if not, check to see if any value falls in a range specified by actualValue:
+                            nums = [int(v) for v in filterValue if v.isdecimal()]
+                            ranges = [v for v in actualValue if '-' in v]
+                            isInRange = False
+                            for range in ranges:
+                                low, hi = range.split('-')
+                                low, hi = int(low), int(hi)
+                                for num in nums:
+                                    if low <= num <= hi:
+                                        isInRange = True
+                                        break
+                                if isInRange:
+                                    break
+                            if not isInRange:
+                                isMatch = False
+                    # Case 2: otherwise if a string, just check if case-insensitive values are equal 
+                    elif isinstance(filterValue, str):
+                        if filterValue.lower() != actualValue.lower():
                             isMatch = False
-                            break
+                    # Case 3: check if values are equal
+                    elif filterValue != actualValue:
+                        isMatch = False
+                    if not isMatch:
+                        break
                 if isMatch:
                     result.append(resource)
                     break
