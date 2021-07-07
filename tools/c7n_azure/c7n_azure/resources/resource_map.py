@@ -30,6 +30,8 @@ ResourceMap = {
     "azure.keyvault-certificate": "c7n_azure.resources.key_vault_certificate.KeyVaultCertificate",
     "azure.keyvault-key": "c7n_azure.resources.key_vault_keys.KeyVaultKeys",
     "azure.keyvault-keys": "c7n_azure.resources.key_vault_keys.KeyVaultKeys",
+    "azure.keyvault-secret": "c7n_azure.resources.key_vault_secrets.KeyVaultSecrets",
+    "azure.keyvault-secrets": "c7n_azure.resources.key_vault_secrets.KeyVaultSecrets",
     "azure.loadbalancer": "c7n_azure.resources.load_balancer.LoadBalancer",
     "azure.networkinterface": "c7n_azure.resources.network_interface.NetworkInterface",
     "azure.networksecuritygroup": "c7n_azure.resources.network_security_group.NetworkSecurityGroup",
