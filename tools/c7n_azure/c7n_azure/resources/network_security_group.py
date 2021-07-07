@@ -9,7 +9,6 @@ from c7n_azure.resources.arm import ArmResourceManager
 from c7n_azure.utils import StringUtils, PortsRangeHelper
 from azure.core.exceptions import AzureError
 from c7n_azure.utils import ThreadHelper
-from c7n.filters.core import contains_regex
 
 from c7n.actions import BaseAction
 from c7n.filters import Filter, FilterValidationError
