@@ -93,9 +93,9 @@ class SqlServerFirewallRulesFilter(FirewallRulesFilter):
 
         for r in query:
             rule = IPRange(r.start_ip_address, r.end_ip_address)
-            if rule == AZURE_SERVICES:
-                # Ignore 0.0.0.0 magic value representing Azure Cloud bypass
-                continue
+            # if rule == AZURE_SERVICES:
+            #     # Ignore 0.0.0.0 magic value representing Azure Cloud bypass
+            #     continue
             resource_rules.add(rule)
 
         return resource_rules
