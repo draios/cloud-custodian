@@ -1,3 +1,4 @@
+from tools.c7n_azure.c7n_azure.resources.subscription import Subscription
 from c7n_azure.provider import resources
 from c7n_azure.resources.arm import ArmResourceManager
 from c7n.filters.core import Filter, ValueFilter, type_schema
@@ -43,12 +44,17 @@ class AutoProvisioningSettingsFilter(Filter):
 
     schema = type_schema(
         'auto-provisioning-settings',
+        required=['type', 'enabled'],
+        **{
+            'enabled': {"type": "boolean"},
+        }
     )
 
     log = logging.getLogger('custodian.azure.security-center.auto-provisioning-settings')
 
     def __init__(self, data, manager=None):
         super(AutoProvisioningSettingsFilter, self).__init__(data, manager)
+        self.enabled = self.data['enabled']
 
     def process(self, resources, event=None):
         client = self.manager.get_client()
@@ -57,8 +63,11 @@ class AutoProvisioningSettingsFilter(Filter):
         settings_list = []
         while True:
             try:
-                settings_list.append(settings_iterator.next().serialize(True))
+                setting = settings_iterator.next().serialize(True)
+                autoProvisionStatus = setting['properties']['autoProvision']
+                if (autoProvisionStatus == "On" and self.enabled) or (autoProvisionStatus == "Off" and not self.enabled):
+                    settings_list.append(setting)
             except StopIteration:
                 break
-
+            
         return settings_list
