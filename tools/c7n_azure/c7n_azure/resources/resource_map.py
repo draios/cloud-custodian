@@ -44,6 +44,7 @@ ResourceMap = {
     "azure.roledefinition": "c7n_azure.resources.access_control.RoleDefinition",
     "azure.routetable": "c7n_azure.resources.route_table.RouteTable",
     "azure.search": "c7n_azure.resources.search.SearchService",
+    "azure.security-center": "c7n_azure.resources.security_center.SecurityCenter",
     "azure.sql-database": "c7n_azure.resources.sqldatabase.SqlDatabase",
     "azure.sqldatabase": "c7n_azure.resources.sqldatabase.SqlDatabase",
     "azure.sql-server": "c7n_azure.resources.sqlserver.SqlServer",
