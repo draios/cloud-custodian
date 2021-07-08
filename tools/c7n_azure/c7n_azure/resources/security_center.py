@@ -2,6 +2,9 @@ from c7n_azure.provider import resources
 from c7n_azure.resources.arm import ArmResourceManager
 from c7n.filters.core import ValueFilter, type_schema
 
+import logging
+log = logging.getLogger(__name__)
+
 @resources.register('security-center')
 class SecurityCenter(ArmResourceManager):
 
@@ -17,8 +20,8 @@ class SecurityCenter(ArmResourceManager):
         # )
         resource_type = 'Microsoft.Security/SecurityCenter'
 
-@SecurityCenter.filter_registry.register('auth-provisioning-settings')
-class ServerAuditingFilter(ValueFilter):
+@SecurityCenter.filter_registry.register('auto-provisioning-settings')
+class AutoProvisioningSettingsFilter(ValueFilter):
     """
     Provides a value filter targeting the auditing policy of this
     SQL Server.
@@ -53,13 +56,14 @@ class ServerAuditingFilter(ValueFilter):
 
     """
 
-    schema = type_schema('auth-provisioning-settings', rinherit=ValueFilter.schema)
+    schema = type_schema('auto-provisioning-settings', rinherit=ValueFilter.schema)
 
     def __call__(self, i):
         client = self.manager.get_client()
         settings = list(
-            client.auth_provisioning_settings
+            client.auto_provisioning_settings
             .list()
         )
-
+        log.debug(settings)
         return settings
+    
