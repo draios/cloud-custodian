@@ -1,3 +1,4 @@
+from copy import Error
 from tools.c7n_azure.c7n_azure.resources.subscription import Subscription
 from c7n_azure.provider import resources
 from c7n_azure.resources.arm import ArmResourceManager
@@ -20,6 +21,7 @@ class SecurityCenter(ArmResourceManager):
         #     'sku.name
         # )
         resource_type = 'Microsoft.Security/SecurityCenter'
+
 
 @SecurityCenter.filter_registry.register('auto-provisioning-settings')
 class AutoProvisioningSettingsFilter(Filter):
@@ -95,17 +97,20 @@ class SecurityContactsFilter(Filter):
 
     schema = type_schema(
         'security-contacts',
-        required=['type', 'enabled'],
+        # required=['type', 'enabled'],
         **{
-            'enabled': {"type": "boolean"},
+            'enabled': {'type': 'boolean'},
+            'alertSevere': {'type': 'boolean'},
+            'alertAdmins': {'type': 'boolean'},
         }
     )
+
+    filterToProperty = {'enabled': 'email', 'alertSevere': 'alertNotifications', 'alertAdmins': 'alertsToAdmins'}
 
     log = logging.getLogger('custodian.azure.security-center.security-contacts')
 
     def __init__(self, data, manager=None):
         super(SecurityContactsFilter, self).__init__(data, manager)
-        self.enabled = self.data['enabled']
 
     def process(self, resources, event=None):
         client = self.manager.get_client()
@@ -115,10 +120,27 @@ class SecurityContactsFilter(Filter):
         while True:
             try:
                 setting = settings_iterator.next().serialize(True)
-                email = setting['properties']['email']
-                if (email and self.enabled) or (not email and not self.enabled):
+                isMatch = True
+                for filter, val in self.data.items():
+                    if filter == "type":
+                        continue
+                    actualVal = setting['properties'][self.filterToProperty[filter]]
+                    
+                    if filter == "enabled":
+                        if (actualVal == "" and val) or (actualVal != "" and not val):
+                            isMatch = False
+                            break
+                    else:
+                        if (actualVal == "On" and not val) or (actualVal == "Off" and val):
+                            isMatch = False
+                            break
+                if isMatch:
                     settings_list.append(setting)
+                
             except StopIteration:
                 break
             
+        # throw an exception if no filter is applied?
+        # if not settings_list:
+        #     raise Exception
         return settings_list
