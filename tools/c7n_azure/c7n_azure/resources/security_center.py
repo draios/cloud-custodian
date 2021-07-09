@@ -69,5 +69,56 @@ class AutoProvisioningSettingsFilter(Filter):
                     settings_list.append(setting)
             except StopIteration:
                 break
+
+        return settings_list
+
+@SecurityCenter.filter_registry.register('security-contacts')
+class SecurityContactsFilter(Filter):
+    """
+    Filter sql servers by whether they have recurring vulnerability scans
+    enabled.
+
+    :example:
+
+    Find SQL servers without vulnerability assessments enabled.
+
+    .. code-block:: yaml
+
+        policies:
+          - name: sql-server-no-va
+            resource: azure.sql-server
+            filters:
+              - type: vulnerability-assessment
+                enabled: false
+
+    """
+
+    schema = type_schema(
+        'security-contacts',
+        required=['type', 'enabled'],
+        **{
+            'enabled': {"type": "boolean"},
+        }
+    )
+
+    log = logging.getLogger('custodian.azure.security-center.security-contacts')
+
+    def __init__(self, data, manager=None):
+        super(SecurityContactsFilter, self).__init__(data, manager)
+        self.enabled = self.data['enabled']
+
+    def process(self, resources, event=None):
+        client = self.manager.get_client()
+
+        settings_iterator = client.security_contacts.list()
+        settings_list = []
+        while True:
+            try:
+                setting = settings_iterator.next().serialize(True)
+                email = setting['properties']['email']
+                if (email and self.enabled) or (not email and not self.enabled):
+                    settings_list.append(setting)
+            except StopIteration:
+                break
             
         return settings_list
