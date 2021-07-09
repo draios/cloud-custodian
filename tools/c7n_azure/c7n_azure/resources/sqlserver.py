@@ -214,9 +214,11 @@ class VulnerabilityAssessmentFilter(Filter):
 
     schema = type_schema(
         'vulnerability-assessment',
-        required=['type', 'enabled'],
+        # required=['type', 'enabled'],
         **{
             'enabled': {"type": "boolean"},
+            'scanReportsEnabled': {"type": "boolean"},
+            'emailAdmins': {"type": "boolean"}
         }
     )
 
@@ -224,7 +226,6 @@ class VulnerabilityAssessmentFilter(Filter):
 
     def __init__(self, data, manager=None):
         super(VulnerabilityAssessmentFilter, self).__init__(data, manager)
-        self.enabled = self.data['enabled']
 
     def process(self, resources, event=None):
         resources, exceptions = ThreadHelper.execute_in_parallel(
@@ -241,6 +242,7 @@ class VulnerabilityAssessmentFilter(Filter):
     def _process_resource_set(self, resources, event=None):
         client = self.manager.get_client()
         result = []
+        
         for resource in resources:
             if 'c7n:vulnerability_assessment' not in resource['properties']:
                 va = list(client.server_vulnerability_assessments.list_by_server(
@@ -254,84 +256,15 @@ class VulnerabilityAssessmentFilter(Filter):
                 else:
                     resource['c7n:vulnerability_assessment'] = {}
 
-            if resource['c7n:vulnerability_assessment']\
-                    .get('recurringScans', {})\
-                    .get('isEnabled', False) == self.enabled:
-                result.append(resource)
+            recurringScans = resource['c7n:vulnerability_assessment'].get('recurringScans', {})
 
-        return result
+            
+            if ('enabled' not in self.data or self.data['enabled'] == recurringScans.get('isEnabled', False)) and\
+                ('scanReportsEnabled' not in self.data or self.data['scanReportsEnabled'] == len(recurringScans.get('emails', []))) and\
+                    ('emailAdmins' not in self.data or self.data['emailAdmins'] == recurringScans.get('emailSubscriptionAdmins', False)):
+                    result.append(resource)
 
-
-@SqlServer.filter_registry.register('vulnerability-assessment-reports')
-class VulnerabilityAssessmentReportsFilter(Filter):
-    """
-    Filter sql servers by whether they have vulnerability assessment
-    'send scan reports' enabled.
-
-    :example:
-
-    Find SQL servers without vulnerability assessments 
-    'send scan reports' enabled.
-
-    .. code-block:: yaml
-
-        policies:
-          - name: sql-server-no-va
-            resource: azure.sql-server
-            filters:
-              - type: vulnerability-assessment-reports
-                enabled: false
-
-    """
-
-    schema = type_schema(
-        'vulnerability-assessment-reports',
-        required=['type', 'enabled'],
-        **{
-            'enabled': {"type": "boolean"},
-        }
-    )
-
-    log = logging.getLogger('custodian.azure.sqldatabase.vulnerability-assessment-reports-filter')
-
-    def __init__(self, data, manager=None):
-        super(VulnerabilityAssessmentReportsFilter, self).__init__(data, manager)
-        self.enabled = self.data['enabled']
-
-    def process(self, resources, event=None):
-        resources, exceptions = ThreadHelper.execute_in_parallel(
-            resources=resources,
-            event=event,
-            execution_method=self._process_resource_set,
-            executor_factory=self.executor_factory,
-            log=log
-        )
-        if exceptions:
-            raise exceptions[0]
-        return resources
-
-    def _process_resource_set(self, resources, event=None):
-        client = self.manager.get_client()
-        result = []
-        for resource in resources:
-            if 'c7n:vulnerability_assessment_reports' not in resource['properties']:
-                va = list(client.server_vulnerability_assessments.list_by_server(
-                    resource['resourceGroup'],
-                    resource['name']))
-
-                # there can only be a single instance named "Default".
-                if va:
-                    resource['c7n:vulnerability_assessment_reports'] = \
-                        va[0].serialize(True).get('properties', {})
-                else:
-                    resource['c7n:vulnerability_assessment_reports'] = {}
-
-            if len(resource['c7n:vulnerability_assessment_reports']\
-                    .get('recurringScans', {})\
-                    .get('emails', [])) == self.enabled:
-                result.append(resource)
-
-        return result
+            return result
 
 
 @SqlServer.filter_registry.register('firewall-rules')
