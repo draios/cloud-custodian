@@ -17,6 +17,7 @@ from c7n.utils import type_schema
 
 log = logging.getLogger('custodian.azure.network_security_group')
 
+
 @resources.register('networksecuritygroup')
 class NetworkSecurityGroup(ArmResourceManager):
     """Network Security Group Resource
@@ -221,13 +222,13 @@ class SecurityRuleFilter(Filter):
             filters:
               - type: security-rule
                 access: "Allow"
-                destinationPortRange: 
+                destinationPortRange:
                     -"3389"
                     -"*"
                     -"contains:3389"
                 direction: "Inbound"
                 protocol: "TCP"
-                sourceAddressPrefix: 
+                sourceAddressPrefix:
                     -"*"
                     -"0.0.0.0"
                     -"<nw>/0"
@@ -243,17 +244,13 @@ class SecurityRuleFilter(Filter):
         sourcePortRange={'type': 'array'},
         destinationPortRange={'type': 'array'},
         sourceAddressPrefix={'type': 'array'},
-        # sourceAddressPrefixes={'type': 'array'},
         destinationAddressPrefix={'type': 'array'},
-        # destinationAddressPrefixes={'type': 'array'},
-        # sourcePortRanges={'type': 'array'},
-        # destinationPortRanges={'type': 'array'},
         access={'type': 'string'},
         priority={'type': 'number'},
         direction={'type': 'string'},
         provisioningState={'type': 'string'},
         includeDefaultRules={'type': 'boolean'}
-        )
+    )
 
     log = logging.getLogger('custodian.azure.network_security_group.security-rule')
 
@@ -282,27 +279,33 @@ class SecurityRuleFilter(Filter):
                 isMatch = True
                 # Iterate over each condition value and compare with the rule's actual value
                 for condition, filterValue in self.data.items():
-                    if filterValue is None or condition == "includeDefaultRules" or condition == 'type':
+                    if filterValue is None\
+                        or condition == "includeDefaultRules"\
+                            or condition == 'type':
                         continue
                     actualValue = None
                     if condition in ruleProperties:
                         actualValue = ruleProperties[condition]
                     # i.e. sourcePortRange vs sourcePortRanges
-                    elif condition+'s' in ruleProperties:
-                        actualValue = ruleProperties[condition+'s']
+                    elif condition + 's' in ruleProperties:
+                        actualValue = ruleProperties[condition + 's']
                     # i.e. destinationAddressPrefix vs destinationAddressPrefixes
-                    elif condition+'es' in ruleProperties:
-                        actualValue = ruleProperties[condition+'es']
+                    elif condition + 'es' in ruleProperties:
+                        actualValue = ruleProperties[condition + 'es']
                     else:
                         raise PolicyValidationError("invalid rule parameter.")
-                    
-                    # Case 1: if comparing two lists, want to check to see if they have a common element
+
+                    # Case 1: if comparing two lists, want to check to see if
+                    # they have a common element
                     if isinstance(filterValue, list) or isinstance(actualValue, list):
-                        filterValue = [filterValue] if not isinstance(filterValue, list) else filterValue
-                        actualValue = [actualValue] if not isinstance(actualValue, list) else actualValue
+                        filterValue = [filterValue] if not isinstance(filterValue, list)\
+                            else filterValue
+                        actualValue = [actualValue] if not isinstance(actualValue, list)\
+                            else actualValue
                         # first, check to see if any direct matches
                         if not set(filterValue).intersection(set(actualValue)):
-                            # if not, check to see if any value falls in a range specified by actualValue:
+                            # if not,
+                            # check to see if any value falls in a range specified by actualValue:
                             nums = [int(v) for v in filterValue if v.isdecimal()]
                             ranges = [v for v in actualValue if '-' in v]
                             isInRange = False
@@ -317,7 +320,7 @@ class SecurityRuleFilter(Filter):
                                     break
                             if not isInRange:
                                 isMatch = False
-                    # Case 2: otherwise if a string, just check if case-insensitive values are equal 
+                    # Case 2: otherwise if a string, just check if case-insensitive values are equal
                     elif isinstance(filterValue, str):
                         if filterValue.lower() != actualValue.lower():
                             isMatch = False
