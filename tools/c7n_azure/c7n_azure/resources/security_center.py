@@ -1,11 +1,10 @@
-from copy import Error
-from tools.c7n_azure.c7n_azure.resources.subscription import Subscription
 from c7n_azure.provider import resources
 from c7n_azure.resources.arm import ArmResourceManager
-from c7n.filters.core import Filter, ValueFilter, type_schema
+from c7n.filters.core import Filter, type_schema
 
 import logging
 log = logging.getLogger(__name__)
+
 
 @resources.register('security-center')
 class SecurityCenter(ArmResourceManager):
@@ -67,12 +66,15 @@ class AutoProvisioningSettingsFilter(Filter):
             try:
                 setting = settings_iterator.next().serialize(True)
                 autoProvisionStatus = setting['properties']['autoProvision']
-                if (autoProvisionStatus == "On" and self.enabled) or (autoProvisionStatus == "Off" and not self.enabled):
+                if (autoProvisionStatus == "On"
+                    and self.enabled) or (autoProvisionStatus == "Off"
+                        and not self.enabled):
                     settings_list.append(setting)
             except StopIteration:
                 break
 
         return settings_list
+
 
 @SecurityCenter.filter_registry.register('security-contacts')
 class SecurityContactsFilter(Filter):
@@ -105,7 +107,11 @@ class SecurityContactsFilter(Filter):
         }
     )
 
-    filterToProperty = {'enabled': 'email', 'alertSevere': 'alertNotifications', 'alertAdmins': 'alertsToAdmins'}
+    filterToProperty = {
+        'enabled': 'email',
+        'alertSevere': 'alertNotifications',
+        'alertAdmins': 'alertsToAdmins'
+    }
 
     log = logging.getLogger('custodian.azure.security-center.security-contacts')
 
@@ -125,7 +131,7 @@ class SecurityContactsFilter(Filter):
                     if filter == "type":
                         continue
                     actualVal = setting['properties'][self.filterToProperty[filter]]
-                    
+
                     if filter == "enabled":
                         if (actualVal == "" and val) or (actualVal != "" and not val):
                             isMatch = False
@@ -136,10 +142,10 @@ class SecurityContactsFilter(Filter):
                             break
                 if isMatch:
                     settings_list.append(setting)
-                
+
             except StopIteration:
                 break
-            
+
         # throw an exception if no filter is applied?
         # if not settings_list:
         #     raise Exception
