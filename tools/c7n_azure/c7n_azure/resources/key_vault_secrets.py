@@ -3,16 +3,9 @@
 
 import logging
 
-from azure.keyvault.keys import KeyProperties
-
-from c7n.filters import Filter
-from c7n.utils import type_schema
-
 from c7n_azure import constants
 from c7n_azure.provider import resources
 from c7n_azure.query import ChildResourceManager, ChildTypeInfo
-from c7n_azure.utils import ThreadHelper, ResourceIdParser
-
 
 log = logging.getLogger('custodian.azure.keyvault.keys')
 
@@ -23,6 +16,17 @@ class KeyVaultSecrets(ChildResourceManager):
 
     :example:
 
+    This policy will find all KeyVaults with an expiration time set
+
+    .. code-block:: yaml
+
+        policies:
+          - name: keyvault-secrets-expiration
+            resource: azure.keyvault-secrets
+            filters:
+              - type: value
+                key: "attributes.expires"
+                value: present
 
     """
 
@@ -53,58 +57,3 @@ class KeyVaultSecrets(ChildResourceManager):
         # When KeyVault contains certificates, it creates corresponding key and secret objects to
         # store cert data. They are managed by KeyVault it is not possible to do any actions.
         return [r for r in resources if not r.get('managed')]
-
-
-# @KeyVaultKeys.filter_registry.register('keyvault')
-# class KeyVaultFilter(Filter):
-#     schema = type_schema(
-#         'keyvault',
-#         required=['vaults'],
-#         **{
-#             'vaults': {'type': 'array', 'items': {'type': 'string'}}
-#         }
-#     )
-
-#     def process(self, resources, event=None):
-#         parent_key = self.manager.resource_type.parent_key
-#         return [r for r in resources
-#                 if ResourceIdParser.get_resource_name(r[parent_key]) in self.data['vaults']]
-
-
-# @KeyVaultKeys.filter_registry.register('key-type')
-# class KeyTypeFilter(Filter):
-#     schema = type_schema(
-#         'key-type',
-#         **{
-#             'key-types': {'type': 'array', 'items': {'enum': ['EC', 'EC-HSM', 'RSA', 'RSA-HSM']}}
-#         }
-#     )
-
-#     def process(self, resources, event=None):
-
-#         resources, _ = ThreadHelper.execute_in_parallel(
-#             resources=resources,
-#             event=event,
-#             execution_method=self._process_resource_set,
-#             executor_factory=self.executor_factory,
-#             log=log
-#         )
-#         return resources
-
-#     def _process_resource_set(self, resources, event):
-#         matched = []
-#         for resource in resources:
-#             try:
-#                 if 'c7n:kty' not in resource:
-#                     id = KeyProperties(key_id=resource['id'])
-#                     client = self.manager.get_client(vault_url=id.vault_url)
-#                     key = client.get_key(id.name, id.version)
-
-#                     resource['c7n:kty'] = key.key.kty.lower()
-
-#                 if resource['c7n:kty'] in [t.lower() for t in self.data['key-types']]:
-#                     matched.append(resource)
-#             except Exception as error:
-#                 log.warning(error)
-
-#         return matched
