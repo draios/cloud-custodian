@@ -14,6 +14,8 @@ from c7n_azure.utils import ThreadHelper
 from c7n_azure.filters import DiagnosticSettingsFilter
 
 log = logging.getLogger('custodian.azure.generic_arm_resource')
+
+
 class GenericArmResourceQuery(ResourceQuery):
 
     def filter(self, resource_manager, **params):
@@ -106,6 +108,7 @@ class ResourceTypeFilter(Filter):
 
         return result
 
+
 @GenericArmResource.filter_registry.register('diagnostic-setting')
 class DiagnosticSettingFilter(Filter):
     schema = type_schema(
@@ -121,7 +124,7 @@ class DiagnosticSettingFilter(Filter):
     def __init__(self, data, manager=None):
         super(DiagnosticSettingFilter, self).__init__(data, manager)
         self.enabled = self.data['enabled']
-    
+
     def process(self, resources, event=None):
         resources, exceptions = ThreadHelper.execute_in_parallel(
             resources=resources,

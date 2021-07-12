@@ -8,9 +8,13 @@ from c7n_azure.resources.arm import ArmResourceManager
 from c7n_azure.filters import FirewallRulesFilter
 from netaddr import IPRange, IPSet
 
-AZURE_SERVICES = IPRange('0.0.0.0', '0.0.0.0')  # nosec
 import logging
+
+AZURE_SERVICES = IPRange('0.0.0.0', '0.0.0.0')  # nosec
+
 logger = logging.getLogger(__name__)
+
+
 @resources.register('postgresql-server')
 class PostgresqlServer(ArmResourceManager):
     """PostgreSQL Server Resource
@@ -72,24 +76,24 @@ class PostgresqlServerFirewallRulesFilter(FirewallRulesFilter):
             resource_rules.add(rule)
         return resource_rules
 
+
 @PostgresqlServer.filter_registry.register('server-parameters')
 class PostgresqlServerParametersFilter(ValueFilter):
-  
-  schema = type_schema('server-parameters', rinherit=ValueFilter.schema)
+    schema = type_schema('server-parameters', rinherit=ValueFilter.schema)
 
-  def __call__(self, i):
-      if 'server_parameters' not in i['properties']:
-          client = self.manager.get_client()
-          params = list(
-              client.configurations
-              .list_by_server(i['resourceGroup'], i['name'])
-          )
+    def __call__(self, i):
+        if 'server_parameters' not in i['properties']:
+            client = self.manager.get_client()
+            params = list(
+                client.configurations
+                .list_by_server(i['resourceGroup'], i['name'])
+            )
 
-          i['properties']['server_parameters'] = {}
-          if params:
-              for parameter in params:
-                  i['properties']['server_parameters'][parameter.serialize(True).get('name')] = parameter.serialize(True).get('properties', {}).get("value", None)
-            #   i['properties']['configurations'] = \
-            #       configurations[3].serialize(True).get('properties', {})
+            i['properties']['server_parameters'] = {}
+            if params:
+                for parameter in params:
+                    i['properties']['server_parameters'][parameter.serialize(True).get('name')]\
+                        = parameter.serialize(True).get('properties', {}).get("value", None)
 
-      return super(PostgresqlServerParametersFilter, self).__call__(i['properties']['server_parameters'])
+        return super(PostgresqlServerParametersFilter,
+          self).__call__(i['properties']['server_parameters'])
