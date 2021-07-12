@@ -1,0 +1,152 @@
+from c7n_azure.provider import resources
+from c7n_azure.resources.arm import ArmResourceManager
+from c7n.filters.core import Filter, type_schema
+
+import logging
+log = logging.getLogger(__name__)
+
+
+@resources.register('security-center')
+class SecurityCenter(ArmResourceManager):
+
+    class resource_type(ArmResourceManager.resource_type):
+        service = 'azure.mgmt.security'
+        client = 'SecurityCenter'
+        enum_spec = ('settings', 'list', None)
+        # default_report_fields = (
+        #     'name',
+        #     'location',
+        #     'resourceGroup',
+        #     'sku.name
+        # )
+        resource_type = 'Microsoft.Security/SecurityCenter'
+
+
+@SecurityCenter.filter_registry.register('auto-provisioning-settings')
+class AutoProvisioningSettingsFilter(Filter):
+    """
+    Filter sql servers by whether they have recurring vulnerability scans
+    enabled.
+
+    :example:
+
+    Find SQL servers without vulnerability assessments enabled.
+
+    .. code-block:: yaml
+
+        policies:
+          - name: sql-server-no-va
+            resource: azure.sql-server
+            filters:
+              - type: vulnerability-assessment
+                enabled: false
+
+    """
+
+    schema = type_schema(
+        'auto-provisioning-settings',
+        required=['type', 'enabled'],
+        **{
+            'enabled': {"type": "boolean"},
+        }
+    )
+
+    log = logging.getLogger('custodian.azure.security-center.auto-provisioning-settings')
+
+    def __init__(self, data, manager=None):
+        super(AutoProvisioningSettingsFilter, self).__init__(data, manager)
+        self.enabled = self.data['enabled']
+
+    def process(self, resources, event=None):
+        client = self.manager.get_client()
+
+        settings_iterator = client.auto_provisioning_settings.list()
+        settings_list = []
+        while True:
+            try:
+                setting = settings_iterator.next().serialize(True)
+                autoProvisionStatus = setting['properties']['autoProvision']
+                if (autoProvisionStatus == "On"
+                    and self.enabled) or (autoProvisionStatus == "Off"
+                        and not self.enabled):
+                    settings_list.append(setting)
+            except StopIteration:
+                break
+
+        return settings_list
+
+
+@SecurityCenter.filter_registry.register('security-contacts')
+class SecurityContactsFilter(Filter):
+    """
+    Filter sql servers by whether they have recurring vulnerability scans
+    enabled.
+
+    :example:
+
+    Find SQL servers without vulnerability assessments enabled.
+
+    .. code-block:: yaml
+
+        policies:
+          - name: sql-server-no-va
+            resource: azure.sql-server
+            filters:
+              - type: vulnerability-assessment
+                enabled: false
+
+    """
+
+    schema = type_schema(
+        'security-contacts',
+        # required=['type', 'enabled'],
+        **{
+            'enabled': {'type': 'boolean'},
+            'alertSevere': {'type': 'boolean'},
+            'alertAdmins': {'type': 'boolean'},
+        }
+    )
+
+    filterToProperty = {
+        'enabled': 'email',
+        'alertSevere': 'alertNotifications',
+        'alertAdmins': 'alertsToAdmins'
+    }
+
+    log = logging.getLogger('custodian.azure.security-center.security-contacts')
+
+    def __init__(self, data, manager=None):
+        super(SecurityContactsFilter, self).__init__(data, manager)
+
+    def process(self, resources, event=None):
+        client = self.manager.get_client()
+
+        settings_iterator = client.security_contacts.list()
+        settings_list = []
+        while True:
+            try:
+                setting = settings_iterator.next().serialize(True)
+                isMatch = True
+                for filter, val in self.data.items():
+                    if filter == "type":
+                        continue
+                    actualVal = setting['properties'][self.filterToProperty[filter]]
+
+                    if filter == "enabled":
+                        if (actualVal == "" and val) or (actualVal != "" and not val):
+                            isMatch = False
+                            break
+                    else:
+                        if (actualVal == "On" and not val) or (actualVal == "Off" and val):
+                            isMatch = False
+                            break
+                if isMatch:
+                    settings_list.append(setting)
+
+            except StopIteration:
+                break
+
+        # throw an exception if no filter is applied?
+        # if not settings_list:
+        #     raise Exception
+        return settings_list

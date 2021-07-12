@@ -230,12 +230,15 @@ class Session:
             # 2020-06-01 is not supported, but 2019-11-01 is working as expected.
             if client == 'azure.mgmt.costmanagement.CostManagementClient':
                 client_args['raw_request_hook'] = cost_query_override_api_version
+            elif client == 'azure.mgmt.security.SecurityCenter':
+                client_args['asc_location'] = klass_parameters['asc_location']
 
             if 'subscription_id' in klass_parameters:
                 client_args['subscription_id'] = self.subscription_id
                 client_args['base_url'] = self.cloud_endpoints.endpoints.resource_manager
             elif 'vault_url' in klass_parameters:
                 client_args['vault_url'] = vault_url
+
             client = klass(**client_args)
 
         if legacy:
