@@ -137,6 +137,48 @@ class AzureADAdministratorsFilter(ValueFilter):
         return super(AzureADAdministratorsFilter, self).__call__(i['properties']['administrators'])
 
 
+@SqlServer.filter_registry.register('auditing-policy')
+class ServerAuditingFilter(ValueFilter):
+    """
+    Provides a value filter targeting the auditing policy of this
+    SQL Server.
+
+    :examples:
+
+    Find SQL Servers with failed database login auditing enabled
+
+    .. code-block:: yaml
+
+        policies:
+          - name: sqlserver-failed-login-audit
+            resource: azure.sqlserver
+            filters:
+              - type: auditing-policy
+                key: "auditActionsAndGroups"
+                op: contains
+                value: "FAILED_DATABASE_AUTHENTICATION_GROUP"
+
+    """
+
+    schema = type_schema('auditing-policy', rinherit=ValueFilter.schema)
+
+    def __call__(self, i):
+        if 'auditing_policy' not in i['properties']:
+            client = self.manager.get_client()
+            auditing_policy = list(
+                client.server_blob_auditing_policies
+                .list_by_server(i['resourceGroup'], i['name'])
+            )
+
+            if auditing_policy:
+                i['properties']['auditing_policy'] = \
+                    auditing_policy[0].serialize(True).get('properties', {})
+            else:
+                i['properties']['auditing_policy'] = {}
+
+        return super(ServerAuditingFilter, self).__call__(i['properties']['auditing_policy'])
+
+
 @SqlServer.filter_registry.register('vulnerability-assessment')
 class VulnerabilityAssessmentFilter(Filter):
     """
@@ -160,9 +202,11 @@ class VulnerabilityAssessmentFilter(Filter):
 
     schema = type_schema(
         'vulnerability-assessment',
-        required=['type', 'enabled'],
+        # required=['type', 'enabled'],
         **{
             'enabled': {"type": "boolean"},
+            'scanReportsEnabled': {"type": "boolean"},
+            'emailAdmins': {"type": "boolean"}
         }
     )
 
@@ -170,7 +214,6 @@ class VulnerabilityAssessmentFilter(Filter):
 
     def __init__(self, data, manager=None):
         super(VulnerabilityAssessmentFilter, self).__init__(data, manager)
-        self.enabled = self.data['enabled']
 
     def process(self, resources, event=None):
         resources, exceptions = ThreadHelper.execute_in_parallel(
@@ -187,25 +230,31 @@ class VulnerabilityAssessmentFilter(Filter):
     def _process_resource_set(self, resources, event=None):
         client = self.manager.get_client()
         result = []
+
         for resource in resources:
             if 'c7n:vulnerability_assessment' not in resource['properties']:
                 va = list(client.server_vulnerability_assessments.list_by_server(
                     resource['resourceGroup'],
                     resource['name']))
 
-                # there can only be a single instance named "Default".
                 if va:
                     resource['c7n:vulnerability_assessment'] = \
                         va[0].serialize(True).get('properties', {})
                 else:
                     resource['c7n:vulnerability_assessment'] = {}
 
-            if resource['c7n:vulnerability_assessment']\
-                    .get('recurringScans', {})\
-                    .get('isEnabled', False) == self.enabled:
+            recurringScans = resource['c7n:vulnerability_assessment'].get('recurringScans', {})
+
+            if ('enabled' not in self.data or self.data['enabled']
+                == recurringScans.get('isEnabled', False)) and\
+                    ('scanReportsEnabled' not in self.data or
+                        self.data['scanReportsEnabled'] == len(recurringScans.get('emails', [])))\
+                    and ('emailAdmins' not in self.data or
+                        self.data['emailAdmins'] ==
+                        recurringScans.get('emailSubscriptionAdmins', False)):
                 result.append(resource)
 
-        return result
+            return result
 
 
 @SqlServer.filter_registry.register('firewall-rules')
