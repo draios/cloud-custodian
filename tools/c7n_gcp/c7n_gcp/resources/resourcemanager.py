@@ -11,7 +11,6 @@ from c7n_gcp.filters import IamPolicyFilter
 from c7n.filters.core import ValueFilter
 from c7n.resolver import ValuesFrom
 from c7n.utils import type_schema, local_session
-from c7n.filters.core import ValueFilter
 
 
 @resources.register('organization')
@@ -185,7 +184,7 @@ class IamPolicyUserRoles(ValueFilter):
 
     def __call__(self, r):
         return self.match(r['iamPolicyUserRoles'])
-        
+
 
 @Project.filter_registry.register('iam-member-roles')
 class IamPolicyMemberRoles(ValueFilter):

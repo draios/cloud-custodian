@@ -332,32 +332,32 @@ class ProjectTest(BaseTest):
             self.assertTrue('user:abc@gmail.com' in members)
 
     def test_project_iam_user_roles(self):
-            factory = self.replay_flight_data('project_iam_policy')
-            p = self.load_policy({
-                'name': 'resource',
-                'resource': 'gcp.project',
-                'filters': [{
-                    'type': 'iam-user-roles',
-                    'key': '[*].roles',
-                    'op': 'contains',
-                    'value': ["roles/owner", "roles/viewer"]
-                }]},
-                session_factory=factory)
-            resources = p.run()
-            self.assertEqual(len(resources), 1)
+        factory = self.replay_flight_data('project_iam_policy')
+        p = self.load_policy({
+            'name': 'resource',
+            'resource': 'gcp.project',
+            'filters': [{
+                'type': 'iam-user-roles',
+                'key': '[*].roles',
+                'op': 'contains',
+                'value': ["roles/owner", "roles/viewer"]
+            }]},
+            session_factory=factory)
+        resources = p.run()
+        self.assertEqual(len(resources), 1)
 
-            for resource in resources:
-                self.assertTrue('iamPolicyUserRoles' in resource)
-                isUserFound = False
-                for userRole in resource['iamPolicyUserRoles']:
-                    user, roles = userRole['user'], userRole['roles']
-                    if user == 'user:abc@gmail.com':
-                        isUserFound = True
-                        self.assertTrue('roles/owner' in roles)
-                        self.assertTrue('roles/viewer' in roles)
-                        break
-                self.assertTrue(isUserFound)
-    
+        for resource in resources:
+            self.assertTrue('iamPolicyUserRoles' in resource)
+            isUserFound = False
+            for userRole in resource['iamPolicyUserRoles']:
+                user, roles = userRole['user'], userRole['roles']
+                if user == 'user:abc@gmail.com':
+                    isUserFound = True
+                    self.assertTrue('roles/owner' in roles)
+                    self.assertTrue('roles/viewer' in roles)
+                    break
+            self.assertTrue(isUserFound)
+
     def test_project_iam_member_roles(self):
         factory = self.replay_flight_data('project-iam-policy')
         p = self.load_policy({
