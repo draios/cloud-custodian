@@ -15,9 +15,10 @@ class IamPolicyFilter(ValueFilter):
           resource: gcp.kms-cryptokey
           filters:
             - type: iam-policy
-              key: "bindings[*].members"
-              op: intersect
-              value: ["allUsers", "allAuthenticatedUsers"]
+              doc:
+                key: "bindings[*].members[]"
+                op: intersect
+                value: ["allUsers", "allAuthenticatedUsers"]
     """
 
     schema = type_schema('iam-policy', rinherit=ValueFilter.schema)
