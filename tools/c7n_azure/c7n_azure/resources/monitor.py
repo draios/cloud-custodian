@@ -1,5 +1,6 @@
-import logging
-from c7n.filters.core import Filter
+from c7n.exceptions import PolicyValidationError
+import logging, os
+from c7n.filters.core import ValueFilter
 from c7n.utils import type_schema
 from c7n_azure.provider import resources
 from c7n_azure.resources.arm import ArmResourceManager
@@ -15,117 +16,80 @@ class Monitor(ArmResourceManager):
         client = 'MonitorManagementClient'
         enum_spec = ('operations', 'list', None)
         resource_type = 'Microsoft.insights/diagnosticSettings'
-        # enum_spec = ('subscription_diagnostic_settings', 'list',
-        # {"subscription_id": "bfc31cc5-d3bd-4b36-a40e-d13688d546ec"})
-        # resource_type = 'Microsoft.insights/diagnosticSettings'
-        # default_report_fields = (
-        #     'name',
-        #     'location',
-        #     'resourceGroup',
-        #     'sku.name
-        # )
 
 
-@Monitor.filter_registry.register('subscription-diagnostic-settings')
-class SubscriptionDiagnosticSettingsFilter(Filter):
+@resources.register('alerts')
+class Alert(ArmResourceManager):
+
+    class resource_type(ArmResourceManager.resource_type):
+        service = 'azure.mgmt.alertsmanagement'
+        client = 'AlertsManagementClient'
+        enum_spec = ('alerts', 'get_all', None)
+
+
+@resources.register('subscription-diagnostic-settings')
+class SubscriptionDiagnosticSettings(ArmResourceManager):
+
+    class resource_type(ArmResourceManager.resource_type):
+        service = 'azure.mgmt.monitor'
+        client = 'MonitorManagementClient'
+        enum_spec = ('subscription_diagnostic_settings', 'list',
+        {'subscription_id': os.getenv("AZURE_SUBSCRIPTION_ID")})
+        resource_type = 'Microsoft.insights/diagnosticSettings'
+
+
+@resources.register('subscription-log-profiles')
+class SubscriptionLogProfiles(ArmResourceManager):
+
+    class resource_type(ArmResourceManager.resource_type):
+        service = 'azure.mgmt.monitor'
+        client = 'MonitorManagementClient'
+        enum_spec = ('log_profiles', 'list', None)
+        resource_type = 'Microsoft.insights/diagnosticSettings'
+
+
+@SubscriptionDiagnosticSettings.filter_registry.register('logs')
+class LogsFilter(ValueFilter):
     """
-    Filter sql servers by whether they have recurring vulnerability scans
-    enabled.
-
-    :example:
-
-    Find SQL servers without vulnerability assessments enabled.
-
-    .. code-block:: yaml
-
-        policies:
-          - name: sql-server-no-va
-            resource: azure.sql-server
-            filters:
-              - type: vulnerability-assessment
-                enabled: false
 
     """
 
-    schema = type_schema(
-        'subscription-diagnostic-settings',
-        required=['type', 'subscriptionId'],
-        **{
-            'subscriptionId': {"type": "string"},
+    log_schema = {
+        'type': 'object',
+        # Doesn't mix well with inherits that extend
+        'additionalProperties': False,
+        'required': ['category', 'enabled'],
+        'properties': {
+            # Doesn't mix well as enum with inherits that extend
+            'type': {'enum': ['value']},
+            'category': {'type': 'string'},
+            'enabled': {'type': 'boolean'},
         }
-    )
+    }
+    schema = type_schema('logs', rinherit=log_schema)
 
-    log = logging.getLogger('custodian.azure.monitor.subscription-diagnostic-settings')
-
-    def __init__(self, data, manager=None):
-        super(SubscriptionDiagnosticSettingsFilter, self).__init__(data, manager)
-        self.id = self.data['subscriptionId']
-
-    def process(self, resources, event=None):
-        client = self.manager.get_client()
-        return client.subscription_diagnostic_settings.list(self.id).serialize(True)
-        # resources, exceptions = ThreadHelper.execute_in_parallel(
-        #     resources=resources,
-        #     event=event,
-        #     execution_method=self._process_resource_set,
-        #     executor_factory=self.executor_factory,
-        #     log=log
-        # )
-        # if exceptions:
-        #     raise exceptions[0]
-        # return resources
-
-    # def _process_resource_set(self, resources, event=None):
-    #     client = self.manager.get_client()
-    #     result = []
-    #     for resource in resources:
-    #         settings = client.subscription_diagnostic_settings.list(self.id)
-    #         result.append(settings)
-
-    #     return result
-
-
-@Monitor.filter_registry.register('log-profiles')
-class LogProfilesFilter(Filter):
-    """
-    Filter sql servers by whether they have recurring vulnerability scans
-    enabled.
-
-    :example:
-
-    Find SQL servers without vulnerability assessments enabled.
-
-    .. code-block:: yaml
-
-        policies:
-          - name: sql-server-no-va
-            resource: azure.sql-server
-            filters:
-              - type: vulnerability-assessment
-                enabled: false
-
-    """
-
-    schema = type_schema(
-        'log-profiles'
-        # required=['type', 'subscriptionId'],
-        # **{
-        #     'subscriptionId': {"type": "string"},
-        # }
-    )
-
-    log = logging.getLogger('custodian.azure.monitor.log-profiles')
+    log = logging.getLogger('custodian.azure.monitor.logs')
 
     def __init__(self, data, manager=None):
-        super(LogProfilesFilter, self).__init__(data, manager)
+        if 'category' not in data:
+            raise PolicyValidationError('Missing category in log filter')
+        if 'enabled' not in data:
+            raise PolicyValidationError('Missing enabled in log filter')
+        data['key'] = data['category']
+        data['value'] = data['enabled']
+        super(LogsFilter, self).__init__(data, manager)
 
     def process(self, resources, event=None):
-        client = self.manager.get_client()
-        log_profiles_iterator = client.log_profiles.list().by_page()
-        while True:
-            try:
-                log.debug(log_profiles_iterator.next())
-            except StopIteration:
-                break
+        r = resources[0]
+        logs = r['properties'].get('logs', [])
+        if not isinstance(logs, dict):
+            logMap = {}
+            for log in logs:
+                logMap[log['category']] = log['enabled']
+            r['properties']['logs'] = logMap
 
-        return []
+        resources = [r]
+        return super(LogsFilter, self).process(resources, event=None)
+
+    def __call__(self, r):
+        return self.match(r['properties']['logs'])

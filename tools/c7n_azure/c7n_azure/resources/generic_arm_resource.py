@@ -7,11 +7,10 @@ from c7n_azure.provider import resources
 from c7n_azure.query import DescribeSource, ResourceQuery
 from c7n_azure.resources.arm import ArmResourceManager
 
-from c7n.filters.core import Filter, type_schema
+from c7n.filters.core import Filter, ValueFilter, type_schema
 from c7n.query import sources
 from c7n_azure.utils import ResourceIdParser, is_resource_group_id
 from c7n_azure.utils import ThreadHelper
-from c7n_azure.filters import DiagnosticSettingsFilter
 
 log = logging.getLogger('custodian.azure.generic_arm_resource')
 
@@ -109,21 +108,14 @@ class ResourceTypeFilter(Filter):
         return result
 
 
-@GenericArmResource.filter_registry.register('diagnostic-setting')
-class DiagnosticSettingFilter(Filter):
-    schema = type_schema(
-        'diagnostic-setting',
-        required=['type', 'enabled'],
-        **{
-            'enabled': {"type": "boolean"},
-        }
-    )
+@GenericArmResource.filter_registry.register('diagnostic-settings')
+class DiagnosticSettingFilter(ValueFilter):
+    schema = type_schema('diagnostic-settings', rinherit=ValueFilter.schema)
 
     log = logging.getLogger('custodian.azure.generic_arm_resource.diagnostic-setting-filter')
 
     def __init__(self, data, manager=None):
         super(DiagnosticSettingFilter, self).__init__(data, manager)
-        self.enabled = self.data['enabled']
 
     def process(self, resources, event=None):
         resources, exceptions = ThreadHelper.execute_in_parallel(
@@ -138,11 +130,20 @@ class DiagnosticSettingFilter(Filter):
         return resources
 
     def _process_resource_set(self, resources, event=None):
-        diagnostic = DiagnosticSettingsFilter(self.data)
-        log.debug(diagnostic)
-        result = diagnostic.process_resource_set(resources)
-        if self.enabled:
-            return result
-        resources = set(resources)
-        result = set(result)
-        return list(resources.difference(result))
+        client = self.manager.get_client('azure.mgmt.monitor.MonitorManagementClient')
+        supported_resources = []
+        for resource in resources:
+            try:
+                settings = client.diagnostic_settings.list(resource['id'])
+            except Exception:
+                continue
+            settings = [s.as_dict() for s in settings.value]
+            # put an empty item in when no diag settings, so the absent operator can function
+            if not settings:
+                settings = [{}]
+            resource["c7n:diagnosticSettings"] = settings
+            supported_resources.append(resource)
+        return super(DiagnosticSettingFilter, self).process(supported_resources)
+
+    def __call__(self, r):
+        return self.match(r['c7n:diagnosticSettings'][0])
