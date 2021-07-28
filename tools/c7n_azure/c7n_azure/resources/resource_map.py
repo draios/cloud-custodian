@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 ResourceMap = {
     "azure.aks": "c7n_azure.resources.k8s_service.KubernetesService",
+    "azure.alerts": "c7n_azure.resources.monitor.Alerts",
     "azure.api-management": "c7n_azure.resources.apimanagement.ApiManagement",
     "azure.appserviceplan": "c7n_azure.resources.appserviceplan.AppServicePlan",
     "azure.armresource": "c7n_azure.resources.generic_arm_resource.GenericArmResource",
@@ -53,6 +54,9 @@ ResourceMap = {
     "azure.storage": "c7n_azure.resources.storage.Storage",
     "azure.storage-container": "c7n_azure.resources.storage_container.StorageContainer",
     "azure.subscription": "c7n_azure.resources.subscription.Subscription",
+    "azure.subscription-diagnostic-settings":
+    "c7n_azure.resources.monitor.SubscriptionDiagnosticSettings",
+    "azure.subscription-log-profiles": "c7n_azure.resources.monitor.SubscriptionLogProfiles",
     "azure.vm": "c7n_azure.resources.vm.VirtualMachine",
     "azure.vmss": "c7n_azure.resources.vmss.VMScaleSet",
     "azure.vnet": "c7n_azure.resources.vnet.Vnet",
