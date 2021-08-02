@@ -37,7 +37,6 @@ class SlackDelivery:
                 target_tags = self.config.get('contact_tags', [])
                 resource_groups = {}
                 for resource_item in resource_list:
-                    owner_tag_found = False
                     # Look through the tags that exist in the config file for owners
                     for target_tag in target_tags:
                         new_owner = ''
@@ -45,7 +44,6 @@ class SlackDelivery:
                             if t.get('Key') == target_tag:
                                 new_owner = t.get('Value')
                         if not new_owner == '':
-                            owner_tag_found = True
                             # check that there is a valid email for the user if not
                             # add it to the default email
                             if "@" not in new_owner:
