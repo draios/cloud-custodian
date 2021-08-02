@@ -286,6 +286,7 @@ class Notify(BaseNotify):
                 'StringValue': self.C7N_DATA_MESSAGE,
             },
         }
+        #print(message)
         result = client.send_message(
             QueueUrl=queue_url,
             MessageBody=self.pack(message),
