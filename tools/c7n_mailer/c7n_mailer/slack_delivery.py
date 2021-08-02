@@ -56,15 +56,7 @@ class SlackDelivery:
                             else:
                                 # This prevents double messages to the same person
                                 if resource_item not in resource_groups.get(new_owner):
-                                    resource_groups.get(new_owner).append(resource_item)
-                    # if no owner tag is present use the default messaging that was set.
-                    if not owner_tag_found:
-                        for owner_ab in sqs_message.get('action', ()).get('owner_absent_contact'):
-                            if owner_ab not in resource_groups.keys():
-                                resource_groups[owner_ab] = [resource_item]
-                            else:
-                                if resource_item not in resource_groups.get(owner_ab):
-                                    resource_groups.get(owner_ab).append(resource_item)
+                                    resource_groups.get(new_owner).append(resource_item)                           
                 # loop through all the values and send them off to the owners
                 for list_owner, value in resource_groups.items():
                     resolved_addrs = self.retrieve_user_im([list_owner])
