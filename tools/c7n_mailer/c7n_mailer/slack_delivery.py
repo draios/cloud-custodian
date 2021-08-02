@@ -54,7 +54,7 @@ class SlackDelivery:
                             else:
                                 # This prevents double messages to the same person
                                 if resource_item not in resource_groups.get(new_owner):
-                                    resource_groups.get(new_owner).append(resource_item)                           
+                                    resource_groups.get(new_owner).append(resource_item)
                 # loop through all the values and send them off to the owners
                 for list_owner, value in resource_groups.items():
                     resolved_addrs = self.retrieve_user_im([list_owner])
