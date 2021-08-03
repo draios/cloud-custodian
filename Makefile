@@ -81,7 +81,7 @@ test-poetry:
 	. $(PWD)/test.env && poetry run pytest -n auto tests tools
 
 test:
-	# ./bin/tox -e py38
+	./bin/tox -e py38
 
 ftest:
 	C7N_FUNCTIONAL=yes AWS_DEFAULT_REGION=us-east-2 pytest tests -m functional
