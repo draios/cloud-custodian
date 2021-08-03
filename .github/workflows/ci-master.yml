@@ -45,9 +45,9 @@ jobs:
           - python-version: 3.7
             os: ubuntu-latest
             tox-target: py37
-          - python-version: 3.8
-            os: ubuntu-latest
-            tox-target: py38-cov
+          # - python-version: 3.8
+          #   os: ubuntu-latest
+          #   tox-target: py38-cov
           - python-version: 3.9
             os: ubuntu-latest
             tox-target: py39
