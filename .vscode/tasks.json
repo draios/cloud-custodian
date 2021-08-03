@@ -3,29 +3,14 @@
     // for the documentation about the tasks.json format
     "version": "2.0.0",
     "command": "make",
+    "isShellCommand": true,
     "echoCommand": true,
     "args": [],
+    "showOutput": "always",
     "tasks": [
-        {
-            "label": "test",
-            "type": "shell",
-            "command": "make",
-            "args": [
-                "test",
-                "test"
-            ],
-            "problemMatcher": [],
-            "group": "test"
-        },
-        {
-            "label": "coverage",
-            "type": "shell",
-            "command": "make",
-            "args": [
-                "coverage",
-                "coverage"
-            ],
-            "problemMatcher": []
-        }
+        {"taskName": "test",
+         "args": ["test"]},
+        {"taskName": "coverage",
+         "args": ["coverage"]}
     ]
 }
