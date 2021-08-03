@@ -82,7 +82,7 @@ jobs:
           tox -vv -e ${{ matrix.tox-target }}
 
       - name: Coverage Generate XML
-        if: contains(matrix.tox-target, 'py38-cov')
+        if: contains(matrix.tox-target, 'py38-covl')
         run: |
           ./.tox/${{ matrix.tox-target }}/bin/coverage xml && \
           bash <(curl -s https://codecov.io/bash) -Z \
