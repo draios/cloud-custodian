@@ -84,7 +84,7 @@ class NotifyTest(BaseTest):
             },
         )
 
-def test_resource_prep(self):
+def test_resource_prep_owners(self):
         session_factory = self.record_flight_data("test_notify_resource_prep")
         policy = self.load_policy(
             {"name": "notify-sns",
