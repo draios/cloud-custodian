@@ -84,6 +84,44 @@ class NotifyTest(BaseTest):
             },
         )
 
+def test_resource_prep(self):
+        session_factory = self.record_flight_data("test_notify_resource_prep")
+        policy = self.load_policy(
+            {"name": "notify-sns",
+             "resource": "ec2",
+             "actions": [
+                 {"type": "notify", "to": ["slack://owners"],
+                  "transport": {"type": "sns", "topic": "zebra"}}]},
+            session_factory=session_factory)
+        self.assertEqual(
+            policy.resource_manager.actions[0].prepare_resources(
+                [{'c7n:user-data': 'xyz', 'Id': 'i-123'}]),
+            [{'Id': 'i-123'}])
+
+        policy = self.load_policy(
+            {"name": "notify-sns",
+             "resource": "launch-config",
+             "actions": [
+                 {"type": "notify", "to": ["slack://owners"],
+                  "transport": {"type": "sns", "topic": "zebra"}}]},
+            session_factory=session_factory)
+        self.assertEqual(
+            policy.resource_manager.actions[0].prepare_resources(
+                [{'UserData': 'xyz', 'Id': 'l-123'}]),
+            [{'Id': 'l-123'}])
+
+        policy = self.load_policy(
+            {"name": "notify-sns",
+             "resource": "asg",
+             "actions": [
+                 {"type": "notify", "to": ["slack://owners"],
+                  "transport": {"type": "sns", "topic": "zebra"}}]},
+            session_factory=session_factory)
+        self.assertEqual(
+            policy.resource_manager.actions[0].prepare_resources(
+                [{'c7n:user-data': 'xyz', 'Id': 'a-123'}]),
+            [{'Id': 'a-123'}])
+
     def test_resource_prep(self):
         session_factory = self.record_flight_data("test_notify_resource_prep")
         policy = self.load_policy(
