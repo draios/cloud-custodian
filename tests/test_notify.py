@@ -84,7 +84,6 @@ class NotifyTest(BaseTest):
             },
         )
 
-
     def test_resource_prep_owners(self):
         session_factory = self.record_flight_data("test_notify_resource_prep")
         policy = self.load_policy(
@@ -122,7 +121,6 @@ class NotifyTest(BaseTest):
             policy.resource_manager.actions[0].prepare_resources(
                 [{'c7n:user-data': 'xyz', 'Id': 'a-123'}]),
             [{'Id': 'a-123'}])
-
 
     def test_resource_prep(self):
         session_factory = self.record_flight_data("test_notify_resource_prep")
