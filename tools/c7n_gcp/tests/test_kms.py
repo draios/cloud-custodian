@@ -149,19 +149,20 @@ class KmsCryptoKeyTest(BaseTest):
         p = self.load_policy(
             {'name': 'resource',
              'resource': 'gcp.kms-cryptokey',
+             'query': [{'location': 'global'}],
              'filters': [{
                  'type': 'iam-policy',
-                 'key': 'bindings[*].members[]',
+                 'doc': {'key': 'bindings[*].members[]',
                  'op': 'intersect',
-                 'value': ['allUsers', 'allAuthenticatedUsers']
+                 'value': ['allUsers', 'allAuthenticatedUsers']}
              }]},
             session_factory=factory)
         resources = p.run()
         self.assertEqual(len(resources), 2)
 
         for resource in resources:
-            self.assertTrue('iamPolicy' in resource)
-            bindings = resource['iamPolicy']['bindings']
+            self.assertTrue('c7n:iamPolicy' in resource)
+            bindings = resource['c7n:iamPolicy']['bindings']
             members = set()
             for binding in bindings:
                 for member in binding['members']:

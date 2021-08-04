@@ -536,6 +536,12 @@ class IamRoleTest(BaseTest):
             p.resource_manager.get_arns(resources),
             ['arn:aws:iam::644160558196:role/service-role/AmazonSageMaker-ExecutionRole-20180108T122369']) # NOQA
 
+        self.assertDeprecation(p, """
+            policy 'iam-inuse-role'
+              filters:
+                unused: filter has been deprecated (use the 'used' filter with 'state' attribute)
+            """)
+
     def test_iam_role_get_resources(self):
         session_factory = self.replay_flight_data("test_iam_role_get_resource")
         p = self.load_policy(
@@ -1033,7 +1039,9 @@ class IamInstanceProfileFilterUsage(BaseTest):
             session_factory=session_factory,
         )
         resources = p.run()
-        self.assertEqual(len(resources), 2)
+        self.assertEqual(len(resources), 1)
+        self.assertEqual(resources[0]["Arn"], "arn:aws:iam::644160558196:instance-profile/mandeep")
+        self.assertEqual(resources[0]["InstanceProfileName"], "mandeep")
 
 
 class IamPolicyFilterUsage(BaseTest):

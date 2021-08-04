@@ -307,75 +307,49 @@ class ProjectTest(BaseTest):
         expected_bindings[0]['members'].append('user:mediapills@gmail.com')
         self.assertEqual(actual_bindings['bindings'], expected_bindings)
 
-    def test_project_iam_policy_filter(self):
-        factory = self.replay_flight_data('project_iam_policy')
+    def test_project_iam_policy_value_filter(self):
+        factory = self.replay_flight_data('project-iam-policy')
         p = self.load_policy({
             'name': 'resource',
             'resource': 'gcp.project',
             'filters': [{
                 'type': 'iam-policy',
-                'key': 'bindings[*].members[]',
-                'op': 'contains',
-                'value': 'user:abc@gmail.com'
+                'doc':
+                    {'key': 'bindings[*].members[]',
+                    'op': 'contains',
+                    'value': 'user:abc@gmail.com'}
             }]},
             session_factory=factory)
         resources = p.run()
         self.assertEqual(len(resources), 3)
 
         for resource in resources:
-            self.assertTrue('iamPolicy' in resource)
-            bindings = resource['iamPolicy']['bindings']
+            self.assertTrue('c7n:iamPolicy' in resource)
+            bindings = resource['c7n:iamPolicy']['bindings']
             members = set()
             for binding in bindings:
                 for member in binding['members']:
                     members.add(member)
             self.assertTrue('user:abc@gmail.com' in members)
 
-    def test_project_iam_user_roles(self):
-        factory = self.replay_flight_data('project_iam_policy')
+    def test_project_iam_policy_user_pair_filter(self):
+        factory = self.replay_flight_data('project-iam-policy')
         p = self.load_policy({
             'name': 'resource',
             'resource': 'gcp.project',
             'filters': [{
-                'type': 'iam-user-roles',
-                'key': '[*].roles',
-                'op': 'contains',
-                'value': ["roles/owner", "roles/viewer"]
+                'type': 'iam-policy',
+                'user-role':
+                    {'user': "abcdefg",
+                    'has': 'true',
+                    'role': 'roles/admin'}
             }]},
             session_factory=factory)
         resources = p.run()
         self.assertEqual(len(resources), 1)
 
         for resource in resources:
-            self.assertTrue('iamPolicyUserRoles' in resource)
-            isUserFound = False
-            for userRole in resource['iamPolicyUserRoles']:
-                user, roles = userRole['user'], userRole['roles']
-                if user == 'user:abc@gmail.com':
-                    isUserFound = True
-                    self.assertTrue('roles/owner' in roles)
-                    self.assertTrue('roles/viewer' in roles)
-                    break
-            self.assertTrue(isUserFound)
-
-    def test_project_iam_member_roles(self):
-        factory = self.replay_flight_data('project-iam-policy')
-        p = self.load_policy({
-            'name': 'resource',
-            'resource': 'gcp.project',
-            'filters': [{
-                'type': 'iam-member-roles',
-                'key': 'serviceAccount',
-                'op': 'intersect',
-                'value': ["roles/owner", "roles/admin", "roles/editor"]
-            }]},
-            session_factory=factory)
-        resources = p.run()
-        self.assertEqual(len(resources), 2)
-
-        for resource in resources:
-            self.assertTrue('iamPolicyMemberRoles' in resource)
-            serviceAccountRoles = resource['iamPolicyMemberRoles']['serviceAccount']
-            self.assertTrue('roles/owner' in serviceAccountRoles or
-             'roles/admin' in serviceAccountRoles or
-             'roles/editor' in serviceAccountRoles)
+            self.assertTrue('c7n:iamPolicyUserRolePair' in resource)
+            user_role_pair = resource['c7n:iamPolicyUserRolePair']
+            self.assertTrue("abcdefg" in user_role_pair)
+            self.assertTrue('roles/admin' in user_role_pair["abcdefg"])

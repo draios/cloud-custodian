@@ -13,12 +13,12 @@
     "status": "200",
     "content-length": "190",
     "-content-encoding": "gzip",
-    "content-location": "https://cloudkms.googleapis.com/v1/projects/qa-onprem/locations/global/keyRings?alt=json"
+    "content-location": "https://cloudkms.googleapis.com/v1/projects/custodian/locations/global/keyRings?alt=json"
   },
   "body": {
     "keyRings": [
       {
-        "name": "projects/qa-onprem/locations/global/keyRings/cloud-custodian-test",
+        "name": "projects/custodian/locations/global/keyRings/cloud-custodian-test",
         "createTime": "2021-06-02T20:46:36.698684169Z"
       }
     ],

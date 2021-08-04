@@ -16,7 +16,7 @@ from c7n.exceptions import ResourceLimitExceeded, PolicyValidationError
 from c7n.resources import aws, load_available
 from c7n.resources.aws import AWS, fake_session
 from c7n.resources.ec2 import EC2
-from c7n.policy import ConfigPollRuleMode, PullMode
+from c7n.policy import execution, ConfigPollRuleMode, Policy, PullMode
 from c7n.schema import generate, JsonSchemaValidator
 from c7n.utils import dumps
 from c7n.query import ConfigSource, TypeInfo
@@ -200,6 +200,17 @@ class PolicyMetaLint(BaseTest):
         if names:
             self.fail("%s dont have resource name for reporting" % (", ".join(names)))
 
+    def test_filter_spec(self):
+        missing_fspec = []
+        for k, v in manager.resources.items():
+            if v.resource_type.filter_name is None:
+                continue
+            if not v.resource_type.filter_type:
+                missing_fspec.append(k)
+        if missing_fspec:
+            self.fail('aws resources missing filter specs: %s' % (
+                ', '.join(missing_fspec)))
+
     def test_ec2_id_prefix(self):
         missing_prefix = []
         for k, v in manager.resources.items():
@@ -237,6 +248,11 @@ class PolicyMetaLint(BaseTest):
         whitelist = set(('AwsS3Object', 'Container'))
         todo = set((
             # q2 2021
+<<<<<<< HEAD
+=======
+            'AwsEcsTaskDefinition',
+            'AwsEcsCluster',
+>>>>>>> gcp-iam-policy-filter
             'AwsEc2Subnet',
             'AwsElasticBeanstalkEnvironment',
             'AwsEc2NetworkAcl',
@@ -429,7 +445,7 @@ class PolicyMetaLint(BaseTest):
             'dlm-policy', 'efs', 'efs-mount-target', 'gamelift-build',
             'glue-connection', 'glue-dev-endpoint', 'cloudhsm-cluster',
             'snowball-cluster', 'snowball', 'ssm-activation',
-            'healthcheck', 'event-rule-target',
+            'healthcheck', 'event-rule-target', 'log-metric',
             'support-case', 'transit-attachment', 'config-recorder'}
 
         missing_method = []
@@ -535,6 +551,40 @@ class PolicyMetaLint(BaseTest):
             self.fail(
                 "Missing permissions %d on \n\t%s"
                 % (len(missing), "\n\t".join(sorted(missing)))
+            )
+
+    def test_deprecation_dates(self):
+        def check_deprecations(source):
+            issues = set()
+            for dep in getattr(source, 'deprecations', ()):
+                when = dep.removed_after
+                if when is not None:
+                    name = f"{source.__module__}.{source.__name__}"
+                    if not isinstance(when, str):
+                        issues.add(f"{name}: \"{dep}\", removed_after attribute must be a string")
+                        continue
+                    try:
+                        datetime.strptime(when, "%Y-%m-%d")
+                    except ValueError:
+                        issues.add(f"{name}: \"{dep}\", removed_after must be a valid date"
+                                   f" in the format 'YYYY-MM-DD', got '{when}'")
+            return issues
+        issues = check_deprecations(Policy)
+        for name, cloud in clouds.items():
+            for resource_name, resource in cloud.resources.items():
+                issues = issues.union(check_deprecations(resource))
+                for fname, f in resource.filter_registry.items():
+                    if fname in ('and', 'or', 'not'):
+                        continue
+                    issues = issues.union(check_deprecations(f))
+                for aname, a in resource.action_registry.items():
+                    issues = issues.union(check_deprecations(a))
+        for name, mode in execution.items():
+            issues = issues.union(check_deprecations(mode))
+        if issues:
+            self.fail(
+                "Deprecation validation issues with \n\t%s" %
+                "\n\t".join(sorted(issues))
             )
 
 

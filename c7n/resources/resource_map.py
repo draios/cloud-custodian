@@ -47,6 +47,7 @@ ResourceMap = {
     "aws.ec2": "c7n.resources.ec2.EC2",
     "aws.ec2-reserved": "c7n.resources.ec2.ReservedInstance",
     "aws.ec2-host": "c7n.resources.ec2.DedicatedHost",
+    "aws.ec2-spot-fleet-request": "c7n.resources.ec2.SpotFleetRequest",
     "aws.ecr": "c7n.resources.ecr.ECR",
     "aws.ecs": "c7n.resources.ecs.ECSCluster",
     "aws.ecs-container-instance": "c7n.resources.ecs.ContainerInstance",
@@ -123,6 +124,7 @@ ResourceMap = {
     "aws.lightsail-elb": "c7n.resources.lightsail.LoadBalancer",
     "aws.lightsail-instance": "c7n.resources.lightsail.Instance",
     "aws.log-group": "c7n.resources.cw.LogGroup",
+    "aws.log-metric": "c7n.resources.cw.LogMetric",
     "aws.message-broker": "c7n.resources.mq.MessageBroker",
     "aws.message-config": "c7n.resources.mq.MessageConfig",
     "aws.ml-model": "c7n.resources.ml.MLModel",
@@ -168,6 +170,8 @@ ResourceMap = {
     "aws.secrets-manager": "c7n.resources.secretsmanager.SecretsManager",
     "aws.security-group": "c7n.resources.vpc.SecurityGroup",
     "aws.serverless-app": "c7n.resources.sar.ServerlessApp",
+    "aws.service-quota-request": "c7n.resources.quotas.ServiceQuotaRequest",
+    "aws.service-quota": "c7n.resources.quotas.ServiceQuota",
     "aws.shield-attack": "c7n.resources.shield.ShieldAttack",
     "aws.shield-protection": "c7n.resources.shield.ShieldProtection",
     "aws.simpledb": "c7n.resources.simpledb.SimpleDB",
@@ -177,6 +181,10 @@ ResourceMap = {
     "aws.sns-subscription": "c7n.resources.sns.SNSSubscription",
     "aws.sqs": "c7n.resources.sqs.SQS",
     "aws.ssm-document": "c7n.resources.ssm.SSMDocument",
+<<<<<<< HEAD
+=======
+    "aws.ssm-data-sync": "c7n.resources.ssm.SSMDataSync",
+>>>>>>> gcp-iam-policy-filter
     "aws.ssm-activation": "c7n.resources.ssm.SSMActivation",
     "aws.ssm-managed-instance": "c7n.resources.ssm.ManagedInstance",
     "aws.ssm-parameter": "c7n.resources.ssm.SSMParameter",

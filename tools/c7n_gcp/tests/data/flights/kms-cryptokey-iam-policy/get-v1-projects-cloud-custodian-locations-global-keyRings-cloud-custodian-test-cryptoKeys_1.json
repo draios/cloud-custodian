@@ -13,14 +13,14 @@
     "status": "200",
     "content-length": "846",
     "-content-encoding": "gzip",
-    "content-location": "https://cloudkms.googleapis.com/v1/projects/qa-onprem/locations/global/keyRings/cloud-custodian-test/cryptoKeys?alt=json"
+    "content-location": "https://cloudkms.googleapis.com/v1/projects/custodian/locations/global/keyRings/cloud-custodian-test/cryptoKeys?alt=json"
   },
   "body": {
     "cryptoKeys": [
       {
-        "name": "projects/qa-onprem/locations/global/keyRings/cloud-custodian-test/cryptoKeys/test1",
+        "name": "projects/custodian/locations/global/keyRings/cloud-custodian-test/cryptoKeys/test1",
         "primary": {
-          "name": "projects/qa-onprem/locations/global/keyRings/cloud-custodian-test/cryptoKeys/test1/cryptoKeyVersions/2",
+          "name": "projects/custodian/locations/global/keyRings/cloud-custodian-test/cryptoKeys/test1/cryptoKeyVersions/2",
           "state": "ENABLED",
           "createTime": "2021-06-12T07:00:00.100909578Z",
           "protectionLevel": "SOFTWARE",
@@ -37,9 +37,9 @@
         }
       },
       {
-        "name": "projects/qa-onprem/locations/global/keyRings/cloud-custodian-test/cryptoKeys/test2",
+        "name": "projects/custodian/locations/global/keyRings/cloud-custodian-test/cryptoKeys/test2",
         "primary": {
-          "name": "projects/qa-onprem/locations/global/keyRings/cloud-custodian-test/cryptoKeys/test2/cryptoKeyVersions/2",
+          "name": "projects/custodian/locations/global/keyRings/cloud-custodian-test/cryptoKeys/test2/cryptoKeyVersions/2",
           "state": "ENABLED",
           "createTime": "2021-06-12T07:00:00.100909578Z",
           "protectionLevel": "SOFTWARE",
@@ -56,9 +56,9 @@
         }
       },
       {
-        "name": "projects/qa-onprem/locations/global/keyRings/cloud-custodian-test/cryptoKeys/test3",
+        "name": "projects/custodian/locations/global/keyRings/cloud-custodian-test/cryptoKeys/test3",
         "primary": {
-          "name": "projects/qa-onprem/locations/global/keyRings/cloud-custodian-test/cryptoKeys/test3/cryptoKeyVersions/2",
+          "name": "projects/custodian/locations/global/keyRings/cloud-custodian-test/cryptoKeys/test3/cryptoKeyVersions/2",
           "state": "ENABLED",
           "createTime": "2021-06-12T07:00:00.100909578Z",
           "protectionLevel": "SOFTWARE",

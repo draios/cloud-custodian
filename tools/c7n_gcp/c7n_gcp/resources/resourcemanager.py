@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import itertools
+from tools.c7n_gcp.c7n_gcp.filters.iampolicy import IamPolicyFilter
 
 from c7n_gcp.actions import SetIamPolicy, MethodAction
 from c7n_gcp.provider import resources
 from c7n_gcp.query import QueryResourceManager, TypeInfo
-from c7n_gcp.filters import IamPolicyFilter
 
 from c7n.filters.core import ValueFilter
 from c7n.resolver import ValuesFrom
@@ -127,6 +127,8 @@ class ProjectIamPolicyFilter(IamPolicyFilter):
     """
     Overrides the base implementation to process Project resources correctly.
     """
+    permissions = ('resourcemanager.projects.getIamPolicy',)
+
     def _verb_arguments(self, resource):
         verb_arguments = SetIamPolicy._verb_arguments(self, resource)
         verb_arguments['body'] = {}
