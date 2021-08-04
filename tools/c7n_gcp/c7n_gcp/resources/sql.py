@@ -1,6 +1,7 @@
 # Copyright The Cloud Custodian Authors.
 # SPDX-License-Identifier: Apache-2.0
 
+from c7n.filters.core import ValueFilter
 import jmespath
 import re
 
@@ -40,6 +41,44 @@ class SqlInstance(QueryResourceManager):
         @staticmethod
         def get_metric_resource_name(resource):
             return "{}:{}".format(resource["project"], resource["name"])
+
+@SqlInstance.filter_registry.register('database-flags')
+class DatabaseFlagsFilter(ValueFilter):
+    """Filters a SQL instance by its database flags.
+
+    :example:
+
+    Filter all SQL instances with the 'skip_show_database' flag set to on.
+    .. code-block :: yaml
+
+       policies:
+        - name: gcp-sql-instance-database-flags
+          resource: gcp.sql-instance
+          filters:
+            - type: database-flags
+              key: "skip_show_database"
+              value: "on"
+    """
+
+    schema = type_schema('database-flags', rinherit=ValueFilter.schema)
+#     permissions = ('cloudsql.databases.list',)
+
+
+    def process(self, resources, event=None):
+
+        for r in resources:
+            if 'databaseFlags' not in r:
+                r['databaseFlags'] = {}
+                continue
+
+            dbFlagMap = {}
+            for flag in r['databaseFlags']:
+                dbFlagMap[flag['name']] = flag['value']
+            r['databaseFlags'] = dbFlagMap
+        return super(DatabaseFlagsFilter, self).process(resources)
+
+    def __call__(self, r):
+        return self.match(r['databaseFlags'])
 
 
 class SqlInstanceAction(MethodAction):
