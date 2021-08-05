@@ -14,7 +14,8 @@ jobs:
       - name: Build Custodian
         run: |
           echo "testing"
-          pip install tox
+          sudo apt install python3.8
+          pip3 install tox
           git clone https://github.com/draios/cloud-custodian.git
           tox -e py38
           source .tox/py38/bin/active
