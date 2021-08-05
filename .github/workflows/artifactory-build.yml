@@ -21,3 +21,4 @@ jobs:
       run: |
         echo "::debug::Take Down"
         pip install tox
+        git --version
