@@ -19,4 +19,4 @@ jobs:
     steps:
     - name: Build Custodian
       run: |
-        echo "test"
+        echo "::debug::Take Down"
