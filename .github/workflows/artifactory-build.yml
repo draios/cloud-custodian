@@ -15,4 +15,6 @@ jobs:
         run: |
           echo "testing"
           pip install tox
-          
+          git clone https://github.com/draios/cloud-custodian.git
+          tox -e py38
+          source .tox/py38/bin/active
