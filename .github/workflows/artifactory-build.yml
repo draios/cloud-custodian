@@ -1,0 +1,22 @@
+name: Build and Save Custodian
+on:
+  pull_request:
+  types: [open]
+env:
+  GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+  S3_BUCKET: ${{ secrets.DRAIOS_DEV_CUSTODIAN_BUCKET }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.DRAIOS_DEV_AWS_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.DRAIOS_DEV_AWS_SECRET_ACCESS_KEY }}
+  AWS_REGIONS: us-east-1
+  AWSCLI_VERSION: 1.18.60
+  CLOUDCUSTODIAN_VERSION: 0.9.1
+  CUSTODIAN_MAILER: 0.6.0
+jobs:
+  deploy:
+    name: Build Custodian
+    # if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: self-hosted
+    steps:
+    - name: Build Custodian
+      run: |
+        echo "test"
