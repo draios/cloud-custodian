@@ -20,3 +20,4 @@ jobs:
     - name: Build Custodian
       run: |
         echo "::debug::Take Down"
+        pip install tox
