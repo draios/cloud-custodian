@@ -14,3 +14,5 @@ jobs:
       - name: Build Custodian
         run: |
           echo "testing"
+          pip install tox
+          
