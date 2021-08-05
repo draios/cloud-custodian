@@ -240,14 +240,14 @@ class SecurityRuleFilter(Filter):
 
     schema = type_schema(
         'security-rule',
-        protocol={'type': 'string'},
+        protocol={'type': 'string', 'enum': ['TCP', 'UDP', '*']},
         sourcePortRange={'type': 'array'},
         destinationPortRange={'type': 'array'},
         sourceAddressPrefix={'type': 'array'},
         destinationAddressPrefix={'type': 'array'},
         access={'type': 'string'},
         priority={'type': 'number'},
-        direction={'type': 'string'},
+        direction={'type': 'string', 'enum': ['Inbound', 'Outbound']},
         provisioningState={'type': 'string'},
         includeDefaultRules={'type': 'boolean'}
     )
