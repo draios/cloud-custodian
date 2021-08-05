@@ -18,5 +18,6 @@ jobs:
           pip3 install tox
           git clone https://github.com/draios/cloud-custodian.git
           ls
+          cd cloud-custodian
           tox -e py38
           source .tox/py38/bin/active
