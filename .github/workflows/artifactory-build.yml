@@ -15,7 +15,7 @@ jobs:
   deploy:
     name: Build Custodian
     # if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
-    # runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
     - name: Build Custodian
       run: |
