@@ -20,5 +20,4 @@ jobs:
           ls
           cd cloud-custodian
           tox -e py38
-          ls -a
-          source .tox/py38/bin/active
+          source .tox/py38/bin/activate
