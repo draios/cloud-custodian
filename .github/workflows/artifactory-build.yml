@@ -28,8 +28,8 @@ jobs:
     env:
        JF_ARTIFACTORY_1: ${{ secrets.artifactory_token_1 }}
     steps:
+    - uses: jfrog/setup-jfrog-cli@v1
     - name: show config
-      uses: jfrog/setup-jfrog-cli@v1
       run: jfrog config show
     - name: Ping artifactory server
       run: jfrog rt ping
