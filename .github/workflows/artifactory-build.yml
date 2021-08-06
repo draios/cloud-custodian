@@ -33,6 +33,9 @@ jobs:
       run: jfrog config show
     - name: Ping artifactory server
       run: |
+        jfrog rt dl artifacts/
+        jfrog rt u aether artifacts/
+        jfrog rt bp
         jfrog rt c export
         jfrog rt ping
         echo test
