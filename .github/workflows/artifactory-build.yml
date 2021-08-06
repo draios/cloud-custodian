@@ -11,12 +11,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Build Custodian
+      - name: Install Ground Work Clients
         run: |
           echo "testing"
           sudo apt install python3.8
           pip3 install tox
+      - name: Build Custodian
+        run: |
           git clone https://github.com/draios/cloud-custodian.git
           cd cloud-custodian
           tox -e py38
           source .tox/py38/bin/activate
+
