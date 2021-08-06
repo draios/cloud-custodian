@@ -25,6 +25,8 @@ jobs:
   artifactory-push:
     runs-on: ubuntu-latest
     needs: build
+    env:
+      TEST: las
     steps:
     - name: Set up jfrog
       uses: jfrog/setup-jfrog-cli@v1
