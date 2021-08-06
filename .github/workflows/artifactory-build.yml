@@ -22,7 +22,9 @@ jobs:
           cd cloud-custodian
           tox -e py38
           source .tox/py38/bin/activate
-      - name: Artifactory Push
+      - name: Artifactory Push Setup
         uses: jfrog/setup-jfrog-cli@v1
+      - name: Artifactory version test
+      
         run: |
           jfrog --version
