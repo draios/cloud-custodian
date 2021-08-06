@@ -29,5 +29,4 @@ jobs:
     needs: build
     steps:
       uses: jfrog/setup-jfrog-cli@v1
-      run: |
-        jfrog config show
+      run: jfrog config show
