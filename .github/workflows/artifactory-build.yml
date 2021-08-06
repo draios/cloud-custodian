@@ -24,10 +24,13 @@ jobs:
           source .tox/py38/bin/activate
       - name: Artifactory Push Setup
         uses: jfrog/setup-jfrog-cli@v1
+      - name: Artifactory Enviroment set u
+        env:
+          JF_ARTIFACTORY_1: ${{ secrets.JF_ARTIFACTORY_1 }}
       - name: Artifactory version test
         run: |
           jfrog --version
       - name: Artifactory Binary push
         run: |
           jfrog config show
-          
+
