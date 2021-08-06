@@ -24,10 +24,10 @@ jobs:
           source .tox/py38/bin/activate
   artifactory-push:
     runs-on: unbuntu-latest
+    env:
+      JF_ARTIFACTORY_1: ${{ secrets.JF_ARTIFACTORY_1 }}
+    needs: build
     steps:
-      needs: build
-      env:
-        JF_ARTIFACTORY_1: ${{ secrets.JF_ARTIFACTORY_1 }}
       uses: jfrog/setup-jfrog-cli@v1
       run: |
         jfrog config show
