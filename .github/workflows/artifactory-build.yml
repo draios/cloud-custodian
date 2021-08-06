@@ -28,5 +28,7 @@ jobs:
       JF_ARTIFACTORY_1: ${{ secrets.JF_ARTIFACTORY_1 }}
     needs: build
     steps:
+    - name: Set up jfrog
       uses: jfrog/setup-jfrog-cli@v1
+    - name: show config
       run: jfrog config show
