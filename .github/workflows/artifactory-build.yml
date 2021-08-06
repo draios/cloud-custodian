@@ -25,17 +25,12 @@ jobs:
   artifactory-push:
     runs-on: ubuntu-latest
     needs: build
-    #env:
-    #   JF_ARTIFACTORY_1: ${{ secrets.artifactory_token_1 }}
+    env:
+       JF_ARTIFACTORY_1: ${{ secrets.artifactory_token_1 }}
     steps:
     - uses: jfrog/setup-jfrog-cli@v1
     - name: show config
       run: jfrog config show
-    - name: Ping artifactory server
+    - name: JFrog ping
       run: |
-        jfrog rt dl artifacts/
-        jfrog rt u aether artifacts/
-        jfrog rt bp
-        jfrog rt c export
         jfrog rt ping
-        echo test
