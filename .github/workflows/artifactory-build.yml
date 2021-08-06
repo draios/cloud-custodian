@@ -29,4 +29,5 @@ jobs:
           jfrog --version
       - name: Artifactory Binary push
         run: |
-          jfrog rt c export
+          jfrog config show
+          
