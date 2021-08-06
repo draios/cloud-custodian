@@ -11,8 +11,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-        env:
-          JF_ARTIFACTORY_1: ${{ secrets.JF_ARTIFACTORY_1 }}
       - name: Install Ground Work Clients
         run: |
           echo "testing"
@@ -24,12 +22,10 @@ jobs:
           cd cloud-custodian
           tox -e py38
           source .tox/py38/bin/activate
-      - name: Artifactory Push Setup
-        uses: jfrog/setup-jfrog-cli@v1
-      - name: Artifactory version test
-        run: |
-          jfrog --version
-      - name: Artifactory Binary push
-        run: |
-          jfrog config show
-
+  artifactory-push:
+    needs: build
+    env:
+      JF_ARTIFACTORY_1: ${{ secrets.JF_ARTIFACTORY_1 }}
+      uses: jfrog/setup-jfrog-cli@v1
+      run: |
+        jfrog config show
