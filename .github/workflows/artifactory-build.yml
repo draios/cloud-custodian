@@ -27,8 +27,8 @@ jobs:
     needs: build
     env:
        JF_ARTIFACTORY_1: ${{ secrets.artifactory_token_1 }}
+    uses: jfrog/setup-jfrog-cli@v1
     steps:
-    - uses: jfrog/setup-jfrog-cli@v1
     - name: show config
       run: jfrog config show
     - name: JFrog ping
