@@ -341,7 +341,7 @@ class ProjectTest(BaseTest):
                 'type': 'iam-policy',
                 'user-role':
                     {'user': "abcdefg",
-                    'has': 'true',
+                    'has': 'True',
                     'role': 'roles/admin'}
             }]},
             session_factory=factory)
