@@ -36,3 +36,6 @@ jobs:
       run: |
         jfrog rt ping --url https://artifactory.internal.sysdig.com/ui/packages/docker:%2F%2Faarch64-agent-builder-image
       # need to find proper log in creds
+    - name: get JFrog version
+      run: |
+        jfrog --version
