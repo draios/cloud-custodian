@@ -23,12 +23,8 @@
           "role": "roles/admin",
           "members": [
             "serviceAccount:abc@testproject.iam.gserviceaccount.com",
-<<<<<<< HEAD
-            "user:abc@gmail.com"
-=======
             "user:abc@gmail.com",
             "abcdefg"
->>>>>>> gcp-iam-policy-filter
           ]
         },
         {

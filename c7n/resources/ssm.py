@@ -8,10 +8,7 @@ from concurrent.futures import as_completed
 from c7n.actions import Action
 from c7n.exceptions import PolicyValidationError
 from c7n.filters import Filter, CrossAccountAccessFilter
-<<<<<<< HEAD
-=======
 from c7n.filters.kms import KmsRelatedFilter
->>>>>>> gcp-iam-policy-filter
 from c7n.query import QueryResourceManager, TypeInfo
 from c7n.manager import resources
 from c7n.tags import universal_augment
@@ -762,10 +759,6 @@ class DeleteSSMDocument(Action):
         'delete',
         force={'type': 'boolean'}
     )
-<<<<<<< HEAD
-=======
-
->>>>>>> gcp-iam-policy-filter
     permissions = ('ssm:DeleteDocument', 'ssm:ModifyDocumentPermission',)
 
     def process(self, resources):
@@ -790,8 +783,6 @@ class DeleteSSMDocument(Action):
                     )
                 else:
                     raise(e)
-<<<<<<< HEAD
-=======
 
 
 @resources.register('ssm-data-sync')
@@ -839,4 +830,3 @@ class DeleteDataSync(Action):
                 client.delete_resource_data_sync(SyncName=r['SyncName'])
             except client.exceptions.ResourceDataSyncNotFoundException:
                 continue
->>>>>>> gcp-iam-policy-filter

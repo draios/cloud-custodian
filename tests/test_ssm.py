@@ -285,13 +285,9 @@ class TestSSM(BaseTest):
             },
             session_factory=session_factory,
         )
-<<<<<<< HEAD
-        resources = p.run()
-=======
 
         resources = p.run()
         self.assertEqual(len(resources), 2)
->>>>>>> gcp-iam-policy-filter
         self.assertEqual(resources[0]["c7n:CrossAccountViolations"][0], "yyyyyyyyyyyy")
 
     def test_ssm_document_remove_sharing(self):
@@ -336,11 +332,7 @@ class TestSSM(BaseTest):
                         "type": "set-sharing",
                         "add": ['yyyyyyyyyyyy']
                     }
-<<<<<<< HEAD
-                ]
-=======
                 ],
->>>>>>> gcp-iam-policy-filter
             },
             session_factory=session_factory,
         )
@@ -404,16 +396,10 @@ class TestSSM(BaseTest):
             },
             session_factory=session_factory,
         )
-<<<<<<< HEAD
-=======
-
->>>>>>> gcp-iam-policy-filter
         try:
             p.run()
         except Exception as e:
             self.assertTrue(e, client.exceptions.InvalidDocumentOperation)
-<<<<<<< HEAD
-=======
 
     def test_get_data_sync_resources(self):
         session_factory = self.replay_flight_data("test_get_data_sync_resources")
@@ -513,4 +499,3 @@ class TestSSM(BaseTest):
 
         data_syncs = p.run()
         self.assertEqual(len(data_syncs), 3)
->>>>>>> gcp-iam-policy-filter
