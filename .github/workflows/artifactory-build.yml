@@ -39,3 +39,6 @@ jobs:
     - name: get JFrog version
       run: |
         jfrog --version
+    - name: test jfrog artifacts
+      run: |
+        jfrog rt dl artifacts/
