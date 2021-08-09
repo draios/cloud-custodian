@@ -34,3 +34,4 @@ jobs:
     - name: JFrog ping
       run: |
         jfrog rt ping
+      # need to find proper log in creds
