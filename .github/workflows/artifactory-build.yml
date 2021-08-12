@@ -34,13 +34,13 @@ jobs:
     #  run: jfrog config show
     - name: JFrog ping
       run: |
-        jfrog rt ping --url https://artifactory.internal.sysdig.com/ui/packages/docker:%2F%2Faarch64-agent-builder-image
+        jfrog rt ping --url https://artifactory.internal.sysdig.com
       # need to find proper log in creds
     - name: get JFrog version
       run: |
         jfrog --version
     - name: test jfrog artifacts
       run: |
-        jfrog rt dl artifacts
+        jfrog rt dl artifacts --url https://artifactory.internal.sysdig.com/
         jfrog rt u aether artifacts
         jfrog rt bp
