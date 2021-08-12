@@ -33,22 +33,36 @@ class SlackDelivery:
         # Check for Slack targets in 'to' action and render appropriate template.
         for target in sqs_message.get('action', ()).get('to'):
             if target == 'slack://owners':
-                to_addrs_to_resources_map = \
-                    self.email_handler.get_email_to_addrs_to_resources_map(sqs_message)
-                for to_addrs, resources in to_addrs_to_resources_map.items():
-
-                    resolved_addrs = self.retrieve_user_im(list(to_addrs))
-
-                    if not resolved_addrs:
-                        continue
-
+                # target_tags = sqs_message.get('action', ()).get('owner_tag')
+                target_tags = self.config.get('contact_tags', [])
+                resource_groups = {}
+                for resource_item in resource_list:
+                    # Look through the tags that exist in the config file for owners
+                    for target_tag in target_tags:
+                        new_owner = ''
+                        for t in resource_item.get('Tags'):
+                            if t.get('Key') == target_tag:
+                                new_owner = t.get('Value')
+                        if not new_owner == '':
+                            # check that there is a valid email for the user if not
+                            # add it to the default email
+                            if "@" not in new_owner:
+                                default_email = sqs_message.get('action', ()).get('default_email')
+                                new_owner = new_owner + default_email
+                            if new_owner not in resource_groups.keys():
+                                resource_groups[new_owner] = [resource_item]
+                            else:
+                                # This prevents double messages to the same person
+                                if resource_item not in resource_groups.get(new_owner):
+                                    resource_groups.get(new_owner).append(resource_item)
+                # loop through all the values and send them off to the owners
+                for list_owner, value in resource_groups.items():
+                    resolved_addrs = self.retrieve_user_im([list_owner])
                     for address, slack_target in resolved_addrs.items():
                         slack_messages[address] = get_rendered_jinja(
-                            slack_target, sqs_message, resources,
+                            slack_target, sqs_message, value,
                             self.logger, 'slack_template', 'slack_default',
                             self.config['templates_folders'])
-                self.logger.debug(
-                    "Generating messages for recipient list produced by resource owner resolution.")
             elif target.startswith('https://hooks.slack.com/'):
                 slack_messages[target] = get_rendered_jinja(
                     target, sqs_message,
