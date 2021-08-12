@@ -1,0 +1,46 @@
+name: "Artifactory-Build"
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Ground Work Clients
+        run: |
+          echo "testing"
+          sudo apt install python3.8
+          pip3 install tox
+      - name: Build Custodian
+        run: |
+          git clone https://github.com/draios/cloud-custodian.git
+          cd cloud-custodian
+          tox -e py38
+          source .tox/py38/bin/activate
+  artifactory-push:
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+      ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+    steps:
+    - uses: jfrog/setup-jfrog-cli@v1
+    #- name: show config
+    #  run: jfrog config show
+    - name: JFrog ping
+      run: |
+        jfrog rt ping --url https://artifactory.internal.sysdig.com
+      # need to find proper log in creds
+    - name: get JFrog version
+      run: |
+        jfrog --version
+    - name: test jfrog artifacts
+      run: |
+        jfrog rt dl artifacts --url https://artifactory.internal.sysdig.com/
+        jfrog rt u aether artifacts
+        jfrog rt bp
