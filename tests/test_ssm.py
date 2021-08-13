@@ -396,6 +396,7 @@ class TestSSM(BaseTest):
             },
             session_factory=session_factory,
         )
+
         try:
             p.run()
         except Exception as e:

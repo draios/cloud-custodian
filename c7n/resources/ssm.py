@@ -759,6 +759,7 @@ class DeleteSSMDocument(Action):
         'delete',
         force={'type': 'boolean'}
     )
+
     permissions = ('ssm:DeleteDocument', 'ssm:ModifyDocumentPermission',)
 
     def process(self, resources):
