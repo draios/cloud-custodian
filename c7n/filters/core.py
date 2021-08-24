@@ -25,6 +25,8 @@ from c7n.resolver import ValuesFrom
 from c7n.utils import set_annotation, type_schema, parse_cidr, parse_date
 from c7n.manager import iter_filters
 
+logger = logging.getLogger(__name__)
+
 
 class FilterValidationError(Exception):
     pass
@@ -64,6 +66,32 @@ def operator_ni(x, y):
     return x not in y
 
 
+def contains_regex(value_list, regex):
+    """Iterate through a list of strings and return True if a string matches regex"""
+    for value in value_list:
+        if regex_match(value, regex):
+            return True
+    return False
+
+
+def substring_in(substr, value_list):
+    """Iterate through a list of strings and return True if a string contains substr"""
+    for value in value_list:
+        if substr in value:
+            return True
+    return False
+
+
+def contains_subset_list(list_of_lists, sublist):
+    """Iterate through a list of lists and return True if a list contains sublist"""
+    sublist = set(sublist)
+    for l in list_of_lists:
+        lSet = set(l)
+        if sublist.issubset(lSet):
+            return True
+    return False
+
+
 def difference(x, y):
     return bool(set(x).difference(y))
 
@@ -91,7 +119,10 @@ OPERATORS = {
     'in': operator_in,
     'ni': operator_ni,
     'not-in': operator_ni,
+    'substr-in': substring_in,
     'contains': operator.contains,
+    'contains-regex': contains_regex,
+    'contains-subset-list': contains_subset_list,
     'difference': difference,
     'intersect': intersect}
 
@@ -214,9 +245,10 @@ class Filter(Element):
             r[self.matched_annotation_key] = intersect_list(
                 values,
                 r.get(self.matched_annotation_key))
-
-        if not values and block_op != 'or':
-            return
+        elif block_op == 'or':
+            r[self.matched_annotation_key] = union_list(
+                values,
+                r.get(self.matched_annotation_key))
 
 
 class BaseValueFilter(Filter):
@@ -268,6 +300,16 @@ def intersect_list(a, b):
     return res
 
 
+def union_list(a, b):
+    if not b:
+        return a
+    if not a:
+        return b
+    res = a
+    res.extend(x for x in b if x not in a)
+    return res
+
+
 class BooleanGroupFilter(Filter):
 
     def __init__(self, data, registry, manager):
@@ -290,6 +332,13 @@ class BooleanGroupFilter(Filter):
 
     def __bool__(self):
         return True
+
+    def get_deprecations(self):
+        """Return any matching deprecations for the nested filters."""
+        deprecations = []
+        for f in self.filters:
+            deprecations.extend(f.get_deprecations())
+        return deprecations
 
 
 class Or(BooleanGroupFilter):
@@ -386,7 +435,7 @@ class AnnotationSweeper:
 
     def sweep(self, resources):
         for rid in set(self.ra_map).difference([
-                r[self.id_key] for r in resources]):
+            r[self.id_key] for r in resources]):
             # Clear annotations if the block filter didn't match
             akeys = [k for k in self.resource_map[rid] if k.startswith('c7n')]
             for k in akeys:
@@ -581,7 +630,7 @@ class ValueFilter(BaseValueFilter):
                 return op(r, v)
             except TypeError:
                 return False
-        elif r == self.v:
+        elif r == v:
             return True
 
         return False
@@ -920,7 +969,7 @@ class ReduceFilter(BaseValueFilter):
         placement = self.data.get('null-order', 'last')
 
         if (placement == 'last' and self.order == 'desc') or (
-            placement != 'last' and self.order != 'desc'
+                placement != 'last' and self.order != 'desc'
         ):
             # return a value that will sort first
             if vtype == 'number':
