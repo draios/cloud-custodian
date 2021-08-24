@@ -1,0 +1,57 @@
+2021-08-24 09:25:09,410 - custodian.policy - DEBUG - Running policy:project resource:gcp.project region:default c7n:0.9.13
+2021-08-24 09:25:10,782 - custodian.output - DEBUG - metric:PolicyException Count:1 policy:project restype:gcp.project
+2021-08-24 09:25:10,782 - custodian.output - ERROR - Error while executing policy
+Traceback (most recent call last):
+  File "/Users/alexqiu/Desktop/cloud-custodian/.tox/py39/lib/python3.9/site-packages/google/auth/impersonated_credentials.py", line 108, in _make_iam_token_request
+    token = token_response["accessToken"]
+KeyError: 'accessToken'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/alexqiu/Desktop/cloud-custodian/c7n/policy.py", line 290, in run
+    resources = self.policy.resource_manager.resources()
+  File "/Users/alexqiu/Desktop/cloud-custodian/tools/c7n_gcp/c7n_gcp/query.py", line 192, in resources
+    resources = self._fetch_resources(q)
+  File "/Users/alexqiu/Desktop/cloud-custodian/tools/c7n_gcp/c7n_gcp/query.py", line 212, in _fetch_resources
+    return self.augment(self.source.get_resources(query)) or []
+  File "/Users/alexqiu/Desktop/cloud-custodian/tools/c7n_gcp/c7n_gcp/query.py", line 75, in get_resources
+    return self.query.filter(self.manager, **query)
+  File "/Users/alexqiu/Desktop/cloud-custodian/tools/c7n_gcp/c7n_gcp/query.py", line 49, in filter
+    return self._invoke_client_enum(
+  File "/Users/alexqiu/Desktop/cloud-custodian/tools/c7n_gcp/c7n_gcp/query.py", line 55, in _invoke_client_enum
+    for page in client.execute_paged_query(enum_op, params):
+  File "/Users/alexqiu/Desktop/cloud-custodian/tools/c7n_gcp/c7n_gcp/client.py", line 422, in execute_paged_query
+    response = self._execute(request)
+  File "/Users/alexqiu/Desktop/cloud-custodian/.tox/py39/lib/python3.9/site-packages/retrying.py", line 49, in wrapped_f
+    return Retrying(*dargs, **dkw).call(f, *args, **kw)
+  File "/Users/alexqiu/Desktop/cloud-custodian/.tox/py39/lib/python3.9/site-packages/retrying.py", line 206, in call
+    return attempt.get(self._wrap_exception)
+  File "/Users/alexqiu/Desktop/cloud-custodian/.tox/py39/lib/python3.9/site-packages/retrying.py", line 247, in get
+    six.reraise(self.value[0], self.value[1], self.value[2])
+  File "/Users/alexqiu/Desktop/cloud-custodian/.tox/py39/lib/python3.9/site-packages/six.py", line 703, in reraise
+    raise value
+  File "/Users/alexqiu/Desktop/cloud-custodian/.tox/py39/lib/python3.9/site-packages/retrying.py", line 200, in call
+    attempt = Attempt(fn(*args, **kwargs), attempt_number, False)
+  File "/Users/alexqiu/Desktop/cloud-custodian/tools/c7n_gcp/c7n_gcp/client.py", line 489, in _execute
+    return request.execute(http=self.http,
+  File "/Users/alexqiu/Desktop/cloud-custodian/.tox/py39/lib/python3.9/site-packages/googleapiclient/_helpers.py", line 134, in positional_wrapper
+    return wrapped(*args, **kwargs)
+  File "/Users/alexqiu/Desktop/cloud-custodian/.tox/py39/lib/python3.9/site-packages/googleapiclient/http.py", line 900, in execute
+    resp, content = _retry_request(
+  File "/Users/alexqiu/Desktop/cloud-custodian/.tox/py39/lib/python3.9/site-packages/googleapiclient/http.py", line 177, in _retry_request
+    resp, content = http.request(uri, method, *args, **kwargs)
+  File "/Users/alexqiu/Desktop/cloud-custodian/.tox/py39/lib/python3.9/site-packages/google_auth_httplib2.py", line 209, in request
+    self.credentials.before_request(self._request, method, uri, request_headers)
+  File "/Users/alexqiu/Desktop/cloud-custodian/.tox/py39/lib/python3.9/site-packages/google/auth/credentials.py", line 133, in before_request
+    self.refresh(request)
+  File "/Users/alexqiu/Desktop/cloud-custodian/.tox/py39/lib/python3.9/site-packages/google/auth/external_account.py", line 221, in refresh
+    self._impersonated_credentials.refresh(request)
+  File "/Users/alexqiu/Desktop/cloud-custodian/.tox/py39/lib/python3.9/site-packages/google/auth/impersonated_credentials.py", line 242, in refresh
+    self._update_token(request)
+  File "/Users/alexqiu/Desktop/cloud-custodian/.tox/py39/lib/python3.9/site-packages/google/auth/impersonated_credentials.py", line 268, in _update_token
+    self.token, self.expiry = _make_iam_token_request(
+  File "/Users/alexqiu/Desktop/cloud-custodian/.tox/py39/lib/python3.9/site-packages/google/auth/impersonated_credentials.py", line 120, in _make_iam_token_request
+    six.raise_from(new_exc, caught_exc)
+  File "<string>", line 3, in raise_from
+google.auth.exceptions.RefreshError: ('Unable to acquire impersonated credentials: No access token or invalid expiration in response.', '{\n  "error": {\n    "code": 500,\n    "message": "Internal error encountered.",\n    "status": "INTERNAL"\n  }\n}\n')
