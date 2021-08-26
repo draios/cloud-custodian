@@ -85,8 +85,13 @@ class Metadata(ValueFilter):
                 continue
             for kv in r["metadata"]["items"]:
                 key, value = kv["key"], kv["value"]
+                # filtering out excessively long keys, 500 bytes arbitrary target for now
+                if isinstance(value, str) and len(value.encode('utf-8')) > 500:
+                    continue
                 r["flattenedMetadata"][key] = value
-
+            del r["metadata"]["items"]
+            if "disks" in r:
+                del r["disks"]
         return super(Metadata, self).process(resources)
 
     def __call__(self, r):
