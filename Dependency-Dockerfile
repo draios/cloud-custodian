@@ -3,11 +3,11 @@
 FROM ubuntu:20.04 as build-env
 
 # pre-requisite distro deps, and build env setup
-RUN adduser --disabled-login --gecos "" custodian
-RUN apt-get --yes update
-RUN apt-get --yes install build-essential curl python3-venv python3-dev --no-install-recommends
-RUN python3 -m venv /usr/local
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3
+RUN adduser --disabled-login --gecos "" custodian && /
+    apt-get --yes update && /
+    apt-get --yes install build-essential curl python3-venv python3-dev --no-install-recommends && /
+    python3 -m venv /usr/local && /
+    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3
 
 WORKDIR /src
 
@@ -36,7 +36,7 @@ RUN . /usr/local/bin/activate && \
 
 RUN mkdir /output
 
-FROM quay.io/sysdig/sysdig-ubi:1.1.10
+FROM quay.io/sysdig/sysdig-mini-ubi:1.1.10
 
 LABEL name="cli" \
       repository="http://github.com/cloud-custodian/cloud-custodian"
@@ -46,9 +46,9 @@ COPY --from=build-env /usr/local/bin /usr/local/bin
 COPY --from=build-env /usr/local/lib /usr/local/lib
 COPY --from=build-env /output /output
 
-RUN yum -y module enable python38:3.8 && \
-    yum -y --setopt=tsflags=nodocs install python38 python38-devel python38-setuptools python38-pip && \
-    yum -y clean all
+RUN microdnf -y module enable python38:3.8 && \
+    microdnf -y --disableplugin=subscription-manager --setopt=tsflags=nodocs install python38 python38-devel python38-setuptools python38-pip && \
+    microdnf -y clean all
 
 VOLUME ["/home/custodian"]
 ENTRYPOINT ["/usr/local/bin/custodian"]
