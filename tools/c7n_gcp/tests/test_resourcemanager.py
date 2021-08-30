@@ -53,6 +53,16 @@ class LimitsTest(BaseTest):
 
 
 class OrganizationTest(BaseTest):
+    def test_project_get(self):
+        factory = self.replay_flight_data(
+            'organization-get-resource', project_id='cloud-custodian')
+        p = self.load_policy({'name': 'organization', 'resource': 'gcp.organization'},
+                             session_factory=factory)
+        org = p.resource_manager.get_resource({
+            "resourceName": "//cloudresourcemanager.googleapis.com/"
+                            "organizations/111111111111"})
+        self.assertEqual(org['lifecycleState'], 'ACTIVE')
+        self.assertEqual(org['displayName'], 'custodian.com')
 
     def test_organization_query(self):
         organization_name = 'organizations/851339424791'
@@ -124,6 +134,17 @@ class FolderTest(BaseTest):
 
 
 class ProjectTest(BaseTest):
+
+    def test_project_get(self):
+        factory = self.replay_flight_data(
+            'project-get-resource', project_id='cloud-custodian')
+        p = self.load_policy({'name': 'project', 'resource': 'gcp.project'},
+                             session_factory=factory)
+        project = p.resource_manager.get_resource({
+            "resourceName": "//cloudresourcemanager.googleapis.com/"
+                            "projects/cloud-custodian"})
+        self.assertEqual(project['lifecycleState'], 'ACTIVE')
+        self.assertEqual(project['name'], 'cloud-custodian')
 
     @pytest.mark.skipif(
         sys.platform.startswith('win'), reason='windows file path fun')
@@ -285,3 +306,50 @@ class ProjectTest(BaseTest):
         actual_bindings = client.execute_query('getIamPolicy', get_iam_policy_params)
         expected_bindings[0]['members'].append('user:mediapills@gmail.com')
         self.assertEqual(actual_bindings['bindings'], expected_bindings)
+
+    def test_project_iam_policy_value_filter(self):
+        factory = self.replay_flight_data('project-iam-policy')
+        p = self.load_policy({
+            'name': 'resource',
+            'resource': 'gcp.project',
+            'filters': [{
+                'type': 'iam-policy',
+                'doc':
+                    {'key': 'bindings[*].members[]',
+                     'op': 'contains',
+                     'value': 'user:abc@gmail.com'}
+            }]},
+            session_factory=factory)
+        resources = p.run()
+        self.assertEqual(len(resources), 3)
+
+        for resource in resources:
+            self.assertTrue('c7n:iamPolicy' in resource)
+            bindings = resource['c7n:iamPolicy']['bindings']
+            members = set()
+            for binding in bindings:
+                for member in binding['members']:
+                    members.add(member)
+            self.assertTrue('user:abc@gmail.com' in members)
+
+    def test_project_iam_policy_user_pair_filter(self):
+        factory = self.replay_flight_data('project-iam-policy')
+        p = self.load_policy({
+            'name': 'resource',
+            'resource': 'gcp.project',
+            'filters': [{
+                'type': 'iam-policy',
+                'user-role':
+                    {'user': "abcdefg",
+                     'has': 'True',
+                     'role': 'roles/admin'}
+            }]},
+            session_factory=factory)
+        resources = p.run()
+        self.assertEqual(len(resources), 1)
+
+        for resource in resources:
+            self.assertTrue('c7n:iamPolicyUserRolePair' in resource)
+            user_role_pair = resource['c7n:iamPolicyUserRolePair']
+            self.assertTrue("abcdefg" in user_role_pair)
+            self.assertTrue('roles/admin' in user_role_pair["abcdefg"])

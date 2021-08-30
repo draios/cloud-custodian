@@ -1,6 +1,7 @@
 # Copyright The Cloud Custodian Authors.
 # SPDX-License-Identifier: Apache-2.0
 
+from c7n.filters.core import ValueFilter
 import jmespath
 import re
 
@@ -27,6 +28,8 @@ class SqlInstance(QueryResourceManager):
         default_report_fields = [
             "name", "state", "databaseVersion", "settings.tier", "settings.dataDiskSizeGb"]
         asset_type = "sqladmin.googleapis.com/Instance"
+        scc_type = "google.cloud.sql.Instance"
+        metric_key = 'resource.labels.database_id'
         perm_service = 'cloudsql'
 
         @staticmethod
@@ -34,6 +37,48 @@ class SqlInstance(QueryResourceManager):
             return client.execute_command(
                 'get', {'project': resource_info['project_id'],
                         'instance': resource_info['database_id'].rsplit(':', 1)[-1]})
+
+        @staticmethod
+        def get_metric_resource_name(resource):
+            return "{}:{}".format(resource["project"], resource["name"])
+
+@SqlInstance.filter_registry.register('database-flags')
+class DatabaseFlagsFilter(ValueFilter):
+    """Filters a SQL instance by its database flags.
+
+    :example:
+
+    Filter all SQL instances with the 'skip_show_database' flag set to on.
+    .. code-block :: yaml
+
+       policies:
+        - name: gcp-sql-instance-database-flags
+          resource: gcp.sql-instance
+          filters:
+            - type: database-flags
+              key: "skip_show_database"
+              value: "on"
+    """
+
+    schema = type_schema('database-flags', rinherit=ValueFilter.schema)
+    #     permissions = ('cloudsql.databases.list',)
+
+
+    def process(self, resources, event=None):
+
+        for r in resources:
+            if 'databaseFlags' not in r:
+                r['databaseFlags'] = {}
+                continue
+
+            dbFlagMap = {}
+            for flag in r['databaseFlags']:
+                dbFlagMap[flag['name']] = flag['value']
+            r['databaseFlags'] = dbFlagMap
+        return super(DatabaseFlagsFilter, self).process(resources)
+
+    def __call__(self, r):
+        return self.match(r['databaseFlags'])
 
 
 class SqlInstanceAction(MethodAction):
@@ -69,6 +114,22 @@ class SqlInstanceStop(MethodAction):
                 'body': {'settings': {'activationPolicy': 'NEVER'}}}
 
 
+@SqlInstance.action_registry.register('start')
+class SqlInstanceStart(MethodAction):
+
+    schema = type_schema('start')
+    method_spec = {'op': 'patch'}
+    path_param_re = re.compile('.*?/projects/(.*?)/instances/(.*)')
+    method_perm = 'update'
+
+    def get_resource_params(self, model, resource):
+        project, instance = self.path_param_re.match(
+            resource['selfLink']).groups()
+        return {'project': project,
+                'instance': instance,
+                'body': {'settings': {'activationPolicy': 'ALWAYS'}}}
+
+
 @resources.register('sql-user')
 class SqlUser(ChildResourceManager):
 
@@ -98,7 +159,7 @@ class SqlInstanceChildWithSelfLink(ChildResourceManager):
         :return: project_id and database_id extracted from child_instance
         """
         return {'project_id': re.match('.*?/projects/(.*?)/instances/.*',
-                                    child_instance['selfLink']).group(1),
+                                       child_instance['selfLink']).group(1),
                 'database_id': child_instance['instance']}
 
 
