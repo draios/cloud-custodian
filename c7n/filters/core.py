@@ -245,9 +245,10 @@ class Filter(Element):
             r[self.matched_annotation_key] = intersect_list(
                 values,
                 r.get(self.matched_annotation_key))
-
-        if not values and block_op != 'or':
-            return
+        elif block_op == 'or':
+            r[self.matched_annotation_key] = union_list(
+                values,
+                r.get(self.matched_annotation_key))
 
 
 class BaseValueFilter(Filter):
@@ -299,6 +300,16 @@ def intersect_list(a, b):
     return res
 
 
+def union_list(a, b):
+    if not b:
+        return a
+    if not a:
+        return b
+    res = a
+    res.extend(x for x in b if x not in a)
+    return res
+
+
 class BooleanGroupFilter(Filter):
 
     def __init__(self, data, registry, manager):
@@ -321,6 +332,13 @@ class BooleanGroupFilter(Filter):
 
     def __bool__(self):
         return True
+
+    def get_deprecations(self):
+        """Return any matching deprecations for the nested filters."""
+        deprecations = []
+        for f in self.filters:
+            deprecations.extend(f.get_deprecations())
+        return deprecations
 
 
 class Or(BooleanGroupFilter):
@@ -417,7 +435,7 @@ class AnnotationSweeper:
 
     def sweep(self, resources):
         for rid in set(self.ra_map).difference([
-                r[self.id_key] for r in resources]):
+            r[self.id_key] for r in resources]):
             # Clear annotations if the block filter didn't match
             akeys = [k for k in self.resource_map[rid] if k.startswith('c7n')]
             for k in akeys:
@@ -951,7 +969,7 @@ class ReduceFilter(BaseValueFilter):
         placement = self.data.get('null-order', 'last')
 
         if (placement == 'last' and self.order == 'desc') or (
-            placement != 'last' and self.order != 'desc'
+                placement != 'last' and self.order != 'desc'
         ):
             # return a value that will sort first
             if vtype == 'number':

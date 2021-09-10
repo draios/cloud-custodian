@@ -32,7 +32,7 @@ install_requires = \
  'six (>=1.15.0,<2.0.0)',
  'tabulate (>=0.8.9,<0.9.0)',
  'typing-extensions (>=3.7.4.3,<4.0.0.0)',
- 'urllib3 (>=1.26.4,<2.0.0)',
+ 'urllib3 (>=1.26.5,<2.0.0)',
  'zipp (>=3.4.1,<4.0.0)']
 
 setup_kwargs = {
