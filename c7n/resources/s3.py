@@ -1424,7 +1424,12 @@ class FilterPublicBlock(Filter):
                 config = s3.get_public_access_block(
                     Bucket=bucket['Name'])['PublicAccessBlockConfiguration']
             except ClientError as e:
-                if e.response['Error']['Code'] != 'NoSuchPublicAccessBlockConfiguration':
+                # Since we run policies in a specific region, it is possible that the s3
+                # client initialized only has access to one region's buckets, whereas
+                # c7n attempts to process the global list of buckets, so we ignore any
+                # NoSuchBucket errors
+                if e.response['Error']['Code'] != 'NoSuchPublicAccessBlockConfiguration' \
+                        or e.response['Error']['Code'] != 'NoSuchBucket':
                     raise
             bucket[self.annotation_key] = config
         return self.matches_filter(config)
