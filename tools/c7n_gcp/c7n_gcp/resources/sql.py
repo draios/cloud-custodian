@@ -42,6 +42,7 @@ class SqlInstance(QueryResourceManager):
         def get_metric_resource_name(resource):
             return "{}:{}".format(resource["project"], resource["name"])
 
+
 @SqlInstance.filter_registry.register('database-flags')
 class DatabaseFlagsFilter(ValueFilter):
     """Filters a SQL instance by its database flags.
@@ -62,7 +63,6 @@ class DatabaseFlagsFilter(ValueFilter):
 
     schema = type_schema('database-flags', rinherit=ValueFilter.schema)
     #     permissions = ('cloudsql.databases.list',)
-
 
     def process(self, resources, event=None):
 

@@ -434,8 +434,8 @@ class AnnotationSweeper:
         self.resource_map = resource_map
 
     def sweep(self, resources):
-        for rid in set(self.ra_map).difference([
-            r[self.id_key] for r in resources]):
+        for rid in set(self.ra_map).difference(
+                [r[self.id_key] for r in resources]):
             # Clear annotations if the block filter didn't match
             akeys = [k for k in self.resource_map[rid] if k.startswith('c7n')]
             for k in akeys:
