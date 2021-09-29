@@ -1429,7 +1429,7 @@ class FilterPublicBlock(Filter):
                 # c7n attempts to process the global list of buckets, so we ignore any
                 # NoSuchBucket errors
                 if e.response['Error']['Code'] != 'NoSuchPublicAccessBlockConfiguration' \
-                        or e.response['Error']['Code'] != 'NoSuchBucket':
+                        and e.response['Error']['Code'] != 'NoSuchBucket':
                     raise
             bucket[self.annotation_key] = config
         return self.matches_filter(config)
