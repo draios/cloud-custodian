@@ -129,8 +129,8 @@ OPERATORS = {
 
 VALUE_TYPES = [
     'age', 'integer', 'expiration', 'normalize', 'size',
-    'cidr', 'cidr_size', 'swap', 'resource_count', 'expr',
-    'unique_size', 'date', 'version']
+    'cidr', 'cidr_size', 'swap', 'resource_count', 'count_only',
+    'expr', 'unique_size', 'date', 'version']
 
 
 class FilterRegistry(PluginRegistry):
@@ -515,6 +515,9 @@ class ValueFilter(BaseValueFilter):
         # the value filters because it operates on the full resource list
         if self.data.get('value_type') == 'resource_count':
             return self._validate_resource_count()
+        elif 'count_only' in self.data:
+            raise PolicyValidationError("value_type must be equal to "
+                                        "\"resource_count\" to use \"count_only\"")
         elif self.data.get('value_type') == 'date':
             if not parse_date(self.data.get('value')):
                 raise PolicyValidationError(
@@ -578,6 +581,8 @@ class ValueFilter(BaseValueFilter):
         if self.data.get('value_type') == 'resource_count':
             op = OPERATORS[self.data.get('op')]
             if op(len(resources), self.data.get('value')):
+                if 'count_only' in self.data and self.data['count_only']:
+                    return [{"Resource": i} for i in range(len(resources))]
                 return resources
             return []
 
