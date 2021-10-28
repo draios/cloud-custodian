@@ -469,6 +469,7 @@ class ValueFilter(BaseValueFilter):
             'type': {'enum': ['value']},
             'key': {'type': 'string'},
             'value_type': {'$ref': '#/definitions/filters_common/value_types'},
+            'count_only': {'enum': [True, False]},
             'default': {'type': 'object'},
             'value_regex': {'type': 'string'},
             'value_from': {'$ref': '#/definitions/filters_common/value_from'},
@@ -582,7 +583,7 @@ class ValueFilter(BaseValueFilter):
             op = OPERATORS[self.data.get('op')]
             if op(len(resources), self.data.get('value')):
                 if 'count_only' in self.data and self.data['count_only']:
-                    return [{"Resource": i} for i in range(len(resources))]
+                    return [f'Resource Count : {len(resources)}']
                 return resources
             return []
 
