@@ -583,7 +583,7 @@ class ValueFilter(BaseValueFilter):
             op = OPERATORS[self.data.get('op')]
             if op(len(resources), self.data.get('value')):
                 if 'count_only' in self.data and self.data['count_only']:
-                    return [f'Resource Count : {len(resources)}']
+                    return [{f'Resource Count : {len(resources)}'}]
                 return resources
             return []
 
