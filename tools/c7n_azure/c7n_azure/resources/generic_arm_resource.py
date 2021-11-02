@@ -1,14 +1,18 @@
 # Copyright The Cloud Custodian Authors.
 # SPDX-License-Identifier: Apache-2.0
 
+import logging
 from c7n_azure.constants import RESOURCE_GROUPS_TYPE
 from c7n_azure.provider import resources
 from c7n_azure.query import DescribeSource, ResourceQuery
 from c7n_azure.resources.arm import ArmResourceManager
 
-from c7n.filters.core import Filter, type_schema
+from c7n.filters.core import Filter, ValueFilter, type_schema
 from c7n.query import sources
 from c7n_azure.utils import ResourceIdParser, is_resource_group_id
+from c7n_azure.utils import ThreadHelper
+
+log = logging.getLogger('custodian.azure.generic_arm_resource')
 
 
 class GenericArmResourceQuery(ResourceQuery):
@@ -102,3 +106,44 @@ class ResourceTypeFilter(Filter):
                 result.append(r)
 
         return result
+
+
+@GenericArmResource.filter_registry.register('diagnostic-settings')
+class DiagnosticSettingFilter(ValueFilter):
+    schema = type_schema('diagnostic-settings', rinherit=ValueFilter.schema)
+
+    log = logging.getLogger('custodian.azure.generic_arm_resource.diagnostic-setting-filter')
+
+    def __init__(self, data, manager=None):
+        super(DiagnosticSettingFilter, self).__init__(data, manager)
+
+    def process(self, resources, event=None):
+        resources, exceptions = ThreadHelper.execute_in_parallel(
+            resources=resources,
+            event=event,
+            execution_method=self._process_resource_set,
+            executor_factory=self.executor_factory,
+            log=log
+        )
+        if exceptions:
+            raise exceptions[0]
+        return resources
+
+    def _process_resource_set(self, resources, event=None):
+        client = self.manager.get_client('azure.mgmt.monitor.MonitorManagementClient')
+        supported_resources = []
+        for resource in resources:
+            try:
+                settings = client.diagnostic_settings.list(resource['id'])
+            except Exception:
+                continue
+            settings = [s.as_dict() for s in settings.value]
+            # put an empty item in when no diag settings, so the absent operator can function
+            if not settings:
+                settings = [{}]
+            resource["c7n:diagnosticSettings"] = settings
+            supported_resources.append(resource)
+        return super(DiagnosticSettingFilter, self).process(supported_resources)
+
+    def __call__(self, r):
+        return self.match(r['c7n:diagnosticSettings'][0])

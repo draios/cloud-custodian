@@ -25,7 +25,7 @@ class Providers:
 
 
 def get_jinja_env(template_folders):
-    env = jinja2.Environment(trim_blocks=True, autoescape=False)
+    env = jinja2.Environment(trim_blocks=True, autoescape=False)  # nosec nosemgrep
     env.filters['yaml_safe'] = functools.partial(yaml.safe_dump, default_flow_style=False)
     env.filters['date_time_format'] = date_time_format
     env.filters['get_date_time_delta'] = get_date_time_delta
@@ -187,6 +187,12 @@ def resource_format(resource, resource_type):
             "%s-%s" % (
                 resource['Engine'], resource['EngineVersion']),
             resource['DBInstanceClass'],
+            resource['AllocatedStorage'])
+    elif resource_type == 'rds-cluster':
+        return "%s %s %s" % (
+            resource['DBClusterIdentifier'],
+            "%s-%s" % (
+                resource['Engine'], resource['EngineVersion']),
             resource['AllocatedStorage'])
     elif resource_type == 'asg':
         tag_map = {t['Key']: t['Value'] for t in resource.get('Tags', ())}

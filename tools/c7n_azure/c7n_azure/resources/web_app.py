@@ -84,7 +84,6 @@ class WebApp(ArmResourceManager):
 @WebApp.filter_registry.register('configuration')
 class ConfigurationFilter(ValueFilter):
     schema = type_schema('configuration', rinherit=ValueFilter.schema)
-    schema_alias = True
 
     def __call__(self, i):
         if 'c7n:configuration' not in i:
@@ -95,3 +94,18 @@ class ConfigurationFilter(ValueFilter):
             i['c7n:configuration'] = instance.serialize(keep_readonly=True)['properties']
 
         return super(ConfigurationFilter, self).__call__(i['c7n:configuration'])
+
+
+@WebApp.filter_registry.register('auth')
+class AuthFilter(ValueFilter):
+    schema = type_schema('auth', rinherit=ValueFilter.schema)
+
+    def __call__(self, i):
+        if 'c7n:auth' not in i:
+            client = self.manager.get_client().web_apps
+            instance = (
+                client.get_auth_settings(i['resourceGroup'], i['name'])
+            )
+            i['c7n:auth'] = instance.serialize(keep_readonly=True)['properties']
+
+        return super(AuthFilter, self).__call__(i['c7n:auth'])
