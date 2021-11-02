@@ -47,7 +47,7 @@ class IamPolicyFilter(Filter):
             op = 'in' if user_role.get('has', True) else 'not-in'
             value_type = 'swap'
             userRolePairFilter = IamPolicyUserRolePairFilter({'key': key, 'value': val,
-                                                              'op': op, 'value_type': value_type}, self.manager)
+                'op': op, 'value_type': value_type}, self.manager)
             resources = userRolePairFilter.process(resources)
 
         return resources

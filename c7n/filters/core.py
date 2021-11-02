@@ -129,8 +129,8 @@ OPERATORS = {
 
 VALUE_TYPES = [
     'age', 'integer', 'expiration', 'normalize', 'size',
-    'cidr', 'cidr_size', 'swap', 'resource_count', 'expr',
-    'unique_size', 'date', 'version']
+    'cidr', 'cidr_size', 'swap', 'resource_count', 'count_only',
+    'expr', 'unique_size', 'date', 'version']
 
 
 class FilterRegistry(PluginRegistry):
@@ -434,8 +434,8 @@ class AnnotationSweeper:
         self.resource_map = resource_map
 
     def sweep(self, resources):
-        for rid in set(self.ra_map).difference([
-            r[self.id_key] for r in resources]):
+        for rid in set(self.ra_map).difference(
+                [r[self.id_key] for r in resources]):
             # Clear annotations if the block filter didn't match
             akeys = [k for k in self.resource_map[rid] if k.startswith('c7n')]
             for k in akeys:
@@ -469,6 +469,7 @@ class ValueFilter(BaseValueFilter):
             'type': {'enum': ['value']},
             'key': {'type': 'string'},
             'value_type': {'$ref': '#/definitions/filters_common/value_types'},
+            'count_only': {'enum': [True, False]},
             'default': {'type': 'object'},
             'value_regex': {'type': 'string'},
             'value_from': {'$ref': '#/definitions/filters_common/value_from'},
@@ -515,6 +516,9 @@ class ValueFilter(BaseValueFilter):
         # the value filters because it operates on the full resource list
         if self.data.get('value_type') == 'resource_count':
             return self._validate_resource_count()
+        elif 'count_only' in self.data:
+            raise PolicyValidationError("value_type must be equal to "
+                                        "\"resource_count\" to use \"count_only\"")
         elif self.data.get('value_type') == 'date':
             if not parse_date(self.data.get('value')):
                 raise PolicyValidationError(
@@ -578,6 +582,8 @@ class ValueFilter(BaseValueFilter):
         if self.data.get('value_type') == 'resource_count':
             op = OPERATORS[self.data.get('op')]
             if op(len(resources), self.data.get('value')):
+                if 'count_only' in self.data and self.data['count_only']:
+                    return [{f'Resource Count : {len(resources)}'}]
                 return resources
             return []
 
