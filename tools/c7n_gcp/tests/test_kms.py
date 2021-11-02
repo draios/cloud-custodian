@@ -9,7 +9,7 @@ class KmsKeyRingTest(BaseTest):
         project_id = 'cloud-custodian'
         location_name = 'us-central1'
         keyring_name = 'cloud-custodian'
-        resource_name = 'projects/{}/locations/{}/keyRings/{}'.\
+        resource_name = 'projects/{}/locations/{}/keyRings/{}'. \
             format(project_id, location_name, keyring_name)
         session_factory = self.replay_flight_data(
             'kms-keyring-query-unspecified_location', project_id=project_id)
@@ -28,7 +28,7 @@ class KmsKeyRingTest(BaseTest):
         location_name_2 = 'us-central1'
         keyring_name_1 = 'cloud-custodian-asia'
         keyring_name_2 = 'cloud-custodian'
-        resource_name_1 = 'projects/{}/locations/{}/keyRings/{}'.\
+        resource_name_1 = 'projects/{}/locations/{}/keyRings/{}'. \
             format(project_id, location_name_1, keyring_name_1)
         resource_name_2 = 'projects/{}/locations/{}/keyRings/{}'. \
             format(project_id, location_name_2, keyring_name_2)
@@ -48,7 +48,7 @@ class KmsKeyRingTest(BaseTest):
         project_id = 'cloud-custodian'
         location_name = 'us-central1'
         keyring_name = 'cloud-custodian'
-        resource_name = 'projects/{}/locations/{}/keyRings/{}'.\
+        resource_name = 'projects/{}/locations/{}/keyRings/{}'. \
             format(project_id, location_name, keyring_name)
         session_factory = self.replay_flight_data('kms-keyring-query', project_id=project_id)
 
@@ -91,7 +91,7 @@ class KmsCryptoKeyTest(BaseTest):
         location_name = 'us-central1'
         keyring_name = 'cloud-custodian'
         cryptokey_name = 'cloud-custodian'
-        parent_resource_name = 'projects/{}/locations/{}/keyRings/{}'\
+        parent_resource_name = 'projects/{}/locations/{}/keyRings/{}' \
             .format(project_id, location_name, keyring_name)
         resource_name = '{}/cryptoKeys/{}'.format(parent_resource_name, cryptokey_name)
         session_factory = self.replay_flight_data('kms-cryptokey-query', project_id=project_id)
@@ -143,6 +143,31 @@ class KmsCryptoKeyTest(BaseTest):
 
         self.assertEqual(resources[0]['name'], resource_name)
         self.assertEqual(resources[0][parent_annotation_key]['name'], parent_resource_name)
+
+    def test_kms_cryptokey_iam_policy_filter(self):
+        factory = self.replay_flight_data('kms-cryptokey-iam-policy')
+        p = self.load_policy(
+            {'name': 'resource',
+             'resource': 'gcp.kms-cryptokey',
+             'query': [{'location': 'global'}],
+             'filters': [{
+                 'type': 'iam-policy',
+                 'doc': {'key': 'bindings[*].members[]',
+                         'op': 'intersect',
+                         'value': ['allUsers', 'allAuthenticatedUsers']}
+             }]},
+            session_factory=factory)
+        resources = p.run()
+        self.assertEqual(len(resources), 2)
+
+        for resource in resources:
+            self.assertTrue('c7n:iamPolicy' in resource)
+            bindings = resource['c7n:iamPolicy']['bindings']
+            members = set()
+            for binding in bindings:
+                for member in binding['members']:
+                    members.add(member)
+            self.assertTrue('allUsers' in members or 'allAuthenticatedUsers' in members)
 
 
 class KmsCryptoKeyVersionTest(BaseTest):

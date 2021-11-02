@@ -1,0 +1,76 @@
+{
+  "headers": {
+    "etag": "0ovIhK5UzcnECSwg8TAgMbysqlM=/hRb6hh65Bv7SnUz-ApGcmc6RYoM=",
+    "content-type": "application/json; charset=UTF-8",
+    "vary": "Origin, X-Origin, Referer",
+    "date": "Thu, 17 Jun 2021 17:50:54 GMT",
+    "server": "ESF",
+    "cache-control": "private",
+    "x-xss-protection": "0",
+    "x-frame-options": "SAMEORIGIN",
+    "x-content-type-options": "nosniff",
+    "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000,h3-T051=\":443\"; ma=2592000,h3-Q050=\":443\"; ma=2592000,h3-Q046=\":443\"; ma=2592000,h3-Q043=\":443\"; ma=2592000,quic=\":443\"; ma=2592000; v=\"46,43\"",
+    "transfer-encoding": "chunked",
+    "status": "200",
+    "content-length": "2952918",
+    "-content-encoding": "gzip",
+    "content-location": "https://compute.googleapis.com/compute/v1/projects/custodian/aggregated/instances?alt=json"
+  },
+  "body": {
+    "id": "projects/custodian/aggregated/instances",
+    "items": {
+      "zones/us-central1-a": {
+        "instances": [
+          {
+            "id": "2839495060",
+            "metadata": {
+              "fingerprint": "3820483903",
+              "items": [
+                {"key": "block-project-ssh-keys", "value": "true"},
+                {"key": "enable-os-login", "value": "false"},
+                {"key": "canIpForward", "value": "true"},
+                {"key": "serial-port-enable", "value": "false"}
+              ]
+            },
+            "serviceAccounts": [
+              {"email": "test1@developer.gserviceaccount.com", "scopes": ["https://www.googleapis.com/auth/cloud-platform"]}
+            ]
+          },
+          {
+            "id": "2000095060",
+            "metadata": {
+              "fingerprint": "3821939203",
+              "items": [
+                {"key": "block-project-ssh-keys", "value": "false"},
+                {"key": "canIpForward", "value": "true"},
+                {"key": "serial-port-enable", "value": "0"}
+              ]
+            },
+            "serviceAccounts": [
+              {"email": "test1@developer.gserviceaccount.com", "scopes": []},
+              {"email": "test2@developer.gserviceaccount.com", "scopes": []}
+            ]
+          },
+          {
+            "id": "3330095050",
+            "metadata": {
+              "fingerprint": "3555599203",
+              "items": [
+                {"key": "block-project-ssh-keys", "value": "false"},
+                {"key": "canIpForward", "value": "false"},
+                {"key": "serial-port-enable", "value": "0"}
+              ]
+            },
+            "serviceAccounts": [
+              {"email": "test1@developer.gserviceaccount.com", "scopes": ["https://www.googleapis.com/auth/cloud-platform"]},
+              {"email": "test2@developer.gserviceaccount.com", "scopes": []}
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
+
+
+
