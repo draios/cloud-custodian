@@ -1,10 +1,9 @@
 # Copyright The Cloud Custodian Authors.
 # SPDX-License-Identifier: Apache-2.0
 
-import json
 import logging
+from tools.c7n_azure.c7n_azure.query import ChildTypeInfo
 
-import jsonpickle
 from azure.cosmosdb.table import TableService
 from azure.mgmt.storage.models import (IPRule, NetworkRuleSet,
                                        StorageAccountUpdateParameters,
@@ -24,8 +23,10 @@ from c7n_azure.filters import (FirewallBypassFilter, FirewallRulesFilter,
 from c7n_azure.provider import resources
 from c7n_azure.resources.arm import ArmResourceManager
 from c7n_azure.storage_utils import StorageUtilities
-from c7n_azure.utils import ThreadHelper
+from c7n_azure.utils import ThreadHelper, serialize
 from netaddr import IPSet
+
+from c7n_azure.resources.arm import ChildArmResourceManager
 
 
 @resources.register('storage')
@@ -354,7 +355,7 @@ class StorageDiagnosticSettingsFilter(ValueFilter):
         if not (storage_prefix_property in storage_account):
             settings = StorageSettingsUtilities.get_settings(
                 self.storage_type, storage_account, session)
-            storage_account[storage_prefix_property] = json.loads(jsonpickle.encode(settings))
+            storage_account[storage_prefix_property] = serialize(settings)
 
         return storage_account[storage_prefix_property]
 
@@ -552,3 +553,46 @@ class RequireSecureTransferAction(AzureBaseAction):
             resource['name'],
             StorageAccountUpdateParameters(enable_https_traffic_only=self.data.get('value'))
         )
+
+
+@resources.register('storage-blob-services')
+class StorageBlobServices(ChildArmResourceManager):
+    """Storage Blob Resource
+
+    :example:
+
+    Finds all Storage Blobs with delete retention policy enabled.
+
+    .. code-block:: yaml
+
+        policies:
+          - name: storage-blob-retention-policy
+            resource: azure.storage-blob-services
+            filters:
+              - type: value
+                key: "properties.deleteRetentionPolicy"
+                value: true
+    """
+
+    class resource_type(ChildTypeInfo):
+        doc_groups = ['Storage']
+        service = 'azure.mgmt.storage'
+        client = 'StorageManagementClient'
+        enum_spec = ('blob_services', 'list', None)
+        parent_manager_name = 'storage'
+        diagnostic_settings_enabled = False
+        resource_type = 'Microsoft.Storage/storageAccounts/blobServices'
+        raise_on_exception = False
+        default_report_fields = (
+            'name',
+            'deleteRetentionPolicy',
+            'isVersioningEnabled',
+            'restorePolicy',
+            'containerDeleteRetentionPolicy',
+            '"c7n:parent-id"'
+        )
+
+        @classmethod
+        def extra_args(cls, parent_resource):
+            return {'resource_group_name': parent_resource['resourceGroup'],
+                    'account_name': parent_resource['name']}
