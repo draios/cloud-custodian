@@ -47,6 +47,7 @@ class Snapshot(QueryResourceManager):
         enum_spec = (
             'describe_snapshots', 'Snapshots', None)
         id = 'SnapshotId'
+        id_prefix = 'snap-'
         filter_name = 'SnapshotIds'
         filter_type = 'list'
         name = 'SnapshotId'
@@ -642,6 +643,7 @@ class EBS(QueryResourceManager):
         arn_type = 'volume'
         enum_spec = ('describe_volumes', 'Volumes', None)
         name = id = 'VolumeId'
+        id_prefix = 'vol-'
         filter_name = 'VolumeIds'
         filter_type = 'list'
         date = 'createTime'
@@ -1596,7 +1598,7 @@ class ModifyVolume(BaseAction):
 
     schema = type_schema(
         'modify',
-        **{'volume-type': {'enum': ['io1', 'gp2', 'st1', 'sc1']},
+        **{'volume-type': {'enum': ['io1', 'gp2', 'gp3', 'st1', 'sc1']},
            'shrink': False,
            'size-percent': {'type': 'number'},
            'iops-percent': {'type': 'number'}})

@@ -160,6 +160,96 @@ class DeleteServiceAccountKey(MethodAction):
         return {'name': r['name']}
 
 
+@ServiceAccount.action_registry.register('delete')
+class DeleteServiceAccount(MethodAction):
+    schema = type_schema('delete')
+    method_spec = {'op': 'delete'}
+    permissions = ("iam.serviceAccounts.delete",)
+
+    def get_resource_params(self, m, r):
+        return {'name': r['name']}
+
+
+@ServiceAccount.action_registry.register('enable')
+class EnableServiceAccount(MethodAction):
+    schema = type_schema('enable')
+    method_spec = {'op': 'enable'}
+    permissions = ("iam.serviceAccounts.enable",)
+
+    def get_resource_params(self, m, r):
+        return {'name': r['name']}
+
+
+@ServiceAccount.action_registry.register('disable')
+class DisableServiceAccount(MethodAction):
+    schema = type_schema('disable')
+    method_spec = {'op': 'disable'}
+    permissions = ("iam.serviceAccounts.disable",)
+
+    def get_resource_params(self, m, r):
+        return {'name': r['name']}
+
+
+@resources.register('service-account-key')
+class ServiceAccountKey(ChildResourceManager):
+    """GCP Resource
+    https://cloud.google.com/iam/docs/reference/rest/v1/projects.serviceAccounts.keys
+    """
+    def _get_parent_resource_info(self, child_instance):
+        project_id, sa = re.match(
+            'projects/(.*?)/serviceAccounts/(.*?)/keys/.*',
+            child_instance['name']).groups()
+        return {'project_id': project_id,
+                'email_id': sa}
+
+    def get_resource_query(self):
+        """Does nothing as self does not need query values unlike its parent
+        which receives them with the use_child_query flag."""
+        pass
+
+    class resource_type(ChildTypeInfo):
+        service = 'iam'
+        version = 'v1'
+        component = 'projects.serviceAccounts.keys'
+        enum_spec = ('list', 'keys[]', [])
+        scope = None
+        scope_key = 'name'
+        name = id = 'name'
+        default_report_fields = ['name', 'privateKeyType', 'keyAlgorithm',
+          'validAfterTime', 'validBeforeTime', 'keyOrigin', 'keyType']
+        parent_spec = {
+            'resource': 'service-account',
+            'child_enum_params': [
+                ('name', 'name')
+            ],
+            'use_child_query': True
+        }
+        asset_type = "iam.googleapis.com/ServiceAccountKey"
+        scc_type = "google.iam.ServiceAccountKey"
+        permissions = ("iam.serviceAccounts.list",)
+
+        @staticmethod
+        def get(client, resource_info):
+            project, sa, key = re.match(
+                '.*?/projects/(.*?)/serviceAccounts/(.*?)/keys/(.*)',
+                resource_info['resourceName']).groups()
+            return client.execute_query(
+                'get', {
+                    'name': 'projects/{}/serviceAccounts/{}/keys/{}'.format(
+                        project, sa, key)})
+
+
+@ServiceAccountKey.action_registry.register('delete')
+class DeleteServiceAccountKey(MethodAction):
+
+    schema = type_schema('delete')
+    method_spec = {'op': 'delete'}
+    permissions = ("iam.serviceAccountKeys.delete",)
+
+    def get_resource_params(self, m, r):
+        return {'name': r['name']}
+
+
 @resources.register('iam-role')
 class Role(QueryResourceManager):
     """GCP Organization Role

@@ -57,7 +57,8 @@ ResourceMap = {
     "azure.storage-container": "c7n_azure.resources.storage_container.StorageContainer",
     "azure.storage-blob-services": "c7n_azure.resources.storage.StorageBlobServices",
     "azure.subscription": "c7n_azure.resources.subscription.Subscription",
-    "azure.subscription-diagnostic-settings": "c7n_azure.resources.monitor.SubscriptionDiagnosticSettings",
+    "azure.subscription-diagnostic-settings":
+    "c7n_azure.resources.monitor.SubscriptionDiagnosticSettings",
     "azure.subscription-log-profiles": "c7n_azure.resources.monitor.SubscriptionLogProfiles",
     "azure.vm": "c7n_azure.resources.vm.VirtualMachine",
     "azure.vmss": "c7n_azure.resources.vmss.VMScaleSet",

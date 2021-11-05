@@ -67,7 +67,9 @@ class AutoProvisioningSettingsFilter(Filter):
             try:
                 setting = settings_iterator.next().serialize(True)
                 autoProvisionStatus = setting['properties']['autoProvision']
-                if (autoProvisionStatus == "On" and self.enabled) or (autoProvisionStatus == "Off" and not self.enabled):
+                if (autoProvisionStatus == "On"
+                    and self.enabled) or (autoProvisionStatus == "Off"
+                        and not self.enabled):
                     settings_list.append(setting)
             except StopIteration:
                 break
@@ -105,7 +107,11 @@ class SecurityContactsFilter(Filter):
         }
     )
 
-    filterToProperty = {'enabled': 'email', 'alertSevere': 'alertNotifications', 'alertAdmins': 'alertsToAdmins'}
+    filterToProperty = {
+        'enabled': 'email',
+        'alertSevere': 'alertNotifications',
+        'alertAdmins': 'alertsToAdmins'
+    }
 
     log = logging.getLogger('custodian.azure.security-center.security-contacts')
 
@@ -136,10 +142,9 @@ class SecurityContactsFilter(Filter):
                             break
                 if isMatch:
                     settings_list.append(setting)
-                
+
             except StopIteration:
                 break
-            
         # throw an exception if no filter is applied?
         # if not settings_list:
         #     raise Exception

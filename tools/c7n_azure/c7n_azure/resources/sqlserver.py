@@ -135,7 +135,7 @@ class AzureADAdministratorsFilter(ValueFilter):
                 i['properties']['administrators'] = {}
 
         return super(AzureADAdministratorsFilter, self).__call__(i['properties']['administrators'])
-
+      
 @SqlServer.filter_registry.register('auditing-policy')
 class ServerAuditingFilter(ValueFilter):
     """
@@ -165,7 +165,7 @@ class ServerAuditingFilter(ValueFilter):
           - name: sqlserver-failed-login-audit
             resource: azure.sqlserver
             filters:
-              - type: uditing-policy
+              - type: auditing-policy
                 key: "auditActionsAndGroups"
                 op: contains
                 value: "FAILED_DATABASE_AUTHENTICATION_GROUP"
@@ -181,7 +181,6 @@ class ServerAuditingFilter(ValueFilter):
                 client.server_blob_auditing_policies
                 .list_by_server(i['resourceGroup'], i['name'])
             )
-            
             if auditing_policy:
                 i['properties']['auditing_policy'] = \
                     auditing_policy[0].serialize(True).get('properties', {})
@@ -242,7 +241,6 @@ class VulnerabilityAssessmentFilter(Filter):
     def _process_resource_set(self, resources, event=None):
         client = self.manager.get_client()
         result = []
-        
         for resource in resources:
             if 'c7n:vulnerability_assessment' not in resource['properties']:
                 va = list(client.server_vulnerability_assessments.list_by_server(
@@ -258,11 +256,14 @@ class VulnerabilityAssessmentFilter(Filter):
 
             recurringScans = resource['c7n:vulnerability_assessment'].get('recurringScans', {})
 
-            
-            if ('enabled' not in self.data or self.data['enabled'] == recurringScans.get('isEnabled', False)) and\
-                ('scanReportsEnabled' not in self.data or self.data['scanReportsEnabled'] == len(recurringScans.get('emails', []))) and\
-                    ('emailAdmins' not in self.data or self.data['emailAdmins'] == recurringScans.get('emailSubscriptionAdmins', False)):
-                    result.append(resource)
+            if ('enabled' not in self.data or self.data['enabled']
+                == recurringScans.get('isEnabled', False)) and\
+                    ('scanReportsEnabled' not in self.data or
+                        self.data['scanReportsEnabled'] == len(recurringScans.get('emails', [])))\
+                    and ('emailAdmins' not in self.data or
+                        self.data['emailAdmins'] ==
+                        recurringScans.get('emailSubscriptionAdmins', False)):
+                result.append(resource)
 
             return result
 
@@ -278,9 +279,9 @@ class SqlServerFirewallRulesFilter(FirewallRulesFilter):
 
         for r in query:
             rule = IPRange(r.start_ip_address, r.end_ip_address)
-            if rule == AZURE_SERVICES:
-                # Ignore 0.0.0.0 magic value representing Azure Cloud bypass
-                continue
+            # if rule == AZURE_SERVICES:
+            #     # Ignore 0.0.0.0 magic value representing Azure Cloud bypass
+            #     continue
             resource_rules.add(rule)
 
         return resource_rules
