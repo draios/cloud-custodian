@@ -1,10 +1,11 @@
+from copy import Error
+from tools.c7n_azure.c7n_azure.resources.subscription import Subscription
 from c7n_azure.provider import resources
 from c7n_azure.resources.arm import ArmResourceManager
-from c7n.filters.core import Filter, type_schema
+from c7n.filters.core import Filter, ValueFilter, type_schema
 
 import logging
 log = logging.getLogger(__name__)
-
 
 @resources.register('security-center')
 class SecurityCenter(ArmResourceManager):
@@ -75,7 +76,6 @@ class AutoProvisioningSettingsFilter(Filter):
 
         return settings_list
 
-
 @SecurityCenter.filter_registry.register('security-contacts')
 class SecurityContactsFilter(Filter):
     """
@@ -131,7 +131,7 @@ class SecurityContactsFilter(Filter):
                     if filter == "type":
                         continue
                     actualVal = setting['properties'][self.filterToProperty[filter]]
-
+                    
                     if filter == "enabled":
                         if (actualVal == "" and val) or (actualVal != "" and not val):
                             isMatch = False
@@ -145,7 +145,6 @@ class SecurityContactsFilter(Filter):
 
             except StopIteration:
                 break
-
         # throw an exception if no filter is applied?
         # if not settings_list:
         #     raise Exception

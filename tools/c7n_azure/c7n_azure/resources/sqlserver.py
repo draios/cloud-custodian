@@ -135,13 +135,25 @@ class AzureADAdministratorsFilter(ValueFilter):
                 i['properties']['administrators'] = {}
 
         return super(AzureADAdministratorsFilter, self).__call__(i['properties']['administrators'])
-
-
+      
 @SqlServer.filter_registry.register('auditing-policy')
 class ServerAuditingFilter(ValueFilter):
     """
     Provides a value filter targeting the auditing policy of this
     SQL Server.
+
+    Here is an example of the available fields:
+
+    .. code-block:: json
+
+      "state": "Enabled",
+      "storageEndpoint": "https://yourstorageendpoint.blob.core.windows.net/",
+      "retentionDays": 0,
+      "auditActionsAndGroups": [
+          "SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP",
+          "FAILED_DATABASE_AUTHENTICATION_GROUP",
+          "BATCH_COMPLETED_GROUP"
+        ]
 
     :examples:
 
@@ -169,7 +181,6 @@ class ServerAuditingFilter(ValueFilter):
                 client.server_blob_auditing_policies
                 .list_by_server(i['resourceGroup'], i['name'])
             )
-
             if auditing_policy:
                 i['properties']['auditing_policy'] = \
                     auditing_policy[0].serialize(True).get('properties', {})
@@ -230,13 +241,13 @@ class VulnerabilityAssessmentFilter(Filter):
     def _process_resource_set(self, resources, event=None):
         client = self.manager.get_client()
         result = []
-
         for resource in resources:
             if 'c7n:vulnerability_assessment' not in resource['properties']:
                 va = list(client.server_vulnerability_assessments.list_by_server(
                     resource['resourceGroup'],
                     resource['name']))
 
+                # there can only be a single instance named "Default".
                 if va:
                     resource['c7n:vulnerability_assessment'] = \
                         va[0].serialize(True).get('properties', {})

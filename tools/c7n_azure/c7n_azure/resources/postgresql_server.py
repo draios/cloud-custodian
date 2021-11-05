@@ -86,14 +86,14 @@ class PostgresqlServerParametersFilter(ValueFilter):
             client = self.manager.get_client()
             params = list(
                 client.configurations
-                .list_by_server(i['resourceGroup'], i['name'])
+                    .list_by_server(i['resourceGroup'], i['name'])
             )
 
             i['properties']['server_parameters'] = {}
             if params:
                 for parameter in params:
-                    i['properties']['server_parameters'][parameter.serialize(True).get('name')]\
+                    i['properties']['server_parameters'][parameter.serialize(True).get('name')] \
                         = parameter.serialize(True).get('properties', {}).get("value", None)
 
         return super(PostgresqlServerParametersFilter,
-          self).__call__(i['properties']['server_parameters'])
+                     self).__call__(i['properties']['server_parameters'])
