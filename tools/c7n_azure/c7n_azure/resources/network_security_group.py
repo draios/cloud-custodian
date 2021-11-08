@@ -1,17 +1,21 @@
 # Copyright The Cloud Custodian Authors.
 # SPDX-License-Identifier: Apache-2.0
 
+import logging
 import uuid
 
 from c7n_azure.provider import resources
 from c7n_azure.resources.arm import ArmResourceManager
 from c7n_azure.utils import StringUtils, PortsRangeHelper
 from azure.core.exceptions import AzureError
+from c7n_azure.utils import ThreadHelper
 
 from c7n.actions import BaseAction
 from c7n.filters import Filter, FilterValidationError
 from c7n.filters.core import PolicyValidationError
 from c7n.utils import type_schema
+
+log = logging.getLogger('custodian.azure.network_security_group')
 
 
 @resources.register('networksecuritygroup')
@@ -199,6 +203,136 @@ class IngressFilter(NetworkSecurityGroupFilter):
 class EgressFilter(NetworkSecurityGroupFilter):
     direction_key = 'Outbound'
     schema = type_schema('egress', rinherit=NetworkSecurityGroupFilter.schema)
+
+
+@NetworkSecurityGroup.filter_registry.register('security-rule')
+class SecurityRuleFilter(Filter):
+    """
+    Filter NSG's by a security rule.
+
+    :example:
+
+    Find NSG's allowing RDP access over the internet.
+
+    .. code-block:: yaml
+
+        policies:
+          - name: networksecuritygroup-rdp-access
+            resource: azure.networksecuritygroup
+            filters:
+              - type: security-rule
+                access: "Allow"
+                destinationPortRange:
+                    -"3389"
+                    -"*"
+                    -"contains:3389"
+                direction: "Inbound"
+                protocol: "TCP"
+                sourceAddressPrefix:
+                    -"*"
+                    -"0.0.0.0"
+                    -"<nw>/0"
+                    -"/0"
+                    "internet"
+                    "any"
+
+    """
+
+    schema = type_schema(
+        'security-rule',
+        protocol={'type': 'string', 'enum': ['TCP', 'UDP', '*']},
+        sourcePortRange={'type': 'array'},
+        destinationPortRange={'type': 'array'},
+        sourceAddressPrefix={'type': 'array'},
+        destinationAddressPrefix={'type': 'array'},
+        access={'type': 'string'},
+        priority={'type': 'number'},
+        direction={'type': 'string', 'enum': ['Inbound', 'Outbound']},
+        provisioningState={'type': 'string'},
+        includeDefaultRules={'type': 'boolean'}
+    )
+
+    log = logging.getLogger('custodian.azure.network_security_group.security-rule')
+
+    def __init__(self, data, manager=None):
+        super(SecurityRuleFilter, self).__init__(data, manager)
+
+    def process(self, resources, event=None):
+        resources, exceptions = ThreadHelper.execute_in_parallel(
+            resources=resources,
+            event=event,
+            execution_method=self._process_resource_set,
+            executor_factory=self.executor_factory,
+            log=log
+        )
+        if exceptions:
+            raise exceptions[0]
+        return resources
+
+    def _process_resource_set(self, resources, event=None):
+        result = []
+        for resource in resources:
+            securityRules = resource['properties']['securityRules']
+            for rule in securityRules:
+                ruleProperties = rule['properties']
+                # Only need to match a single rule
+                isMatch = True
+                # Iterate over each condition value and compare with the rule's actual value
+                for condition, filterValue in self.data.items():
+                    if filterValue is None\
+                        or condition == "includeDefaultRules"\
+                            or condition == 'type':
+                        continue
+                    actualValue = None
+                    if condition in ruleProperties:
+                        actualValue = ruleProperties[condition]
+                    # i.e. sourcePortRange vs sourcePortRanges
+                    elif condition + 's' in ruleProperties:
+                        actualValue = ruleProperties[condition + 's']
+                    # i.e. destinationAddressPrefix vs destinationAddressPrefixes
+                    elif condition + 'es' in ruleProperties:
+                        actualValue = ruleProperties[condition + 'es']
+                    else:
+                        raise PolicyValidationError("invalid rule parameter.")
+
+                    # Case 1: if comparing two lists, want to check to see if
+                    # they have a common element
+                    if isinstance(filterValue, list) or isinstance(actualValue, list):
+                        filterValue = [filterValue] if not isinstance(filterValue, list)\
+                            else filterValue
+                        actualValue = [actualValue] if not isinstance(actualValue, list)\
+                            else actualValue
+                        # first, check to see if any direct matches
+                        if not set(filterValue).intersection(set(actualValue)):
+                            # if not,
+                            # check to see if any value falls in a range specified by actualValue:
+                            nums = [int(v) for v in filterValue if v.isdecimal()]
+                            ranges = [v for v in actualValue if '-' in v]
+                            isInRange = False
+                            for range in ranges:
+                                low, hi = range.split('-')
+                                low, hi = int(low), int(hi)
+                                for num in nums:
+                                    if low <= num <= hi:
+                                        isInRange = True
+                                        break
+                                if isInRange:
+                                    break
+                            if not isInRange:
+                                isMatch = False
+                    # Case 2: otherwise if a string, just check if case-insensitive values are equal
+                    elif isinstance(filterValue, str):
+                        if filterValue.lower() != actualValue.lower():
+                            isMatch = False
+                    # Case 3: check if values are equal
+                    elif filterValue != actualValue:
+                        isMatch = False
+                    if not isMatch:
+                        break
+                if isMatch:
+                    result.append(resource)
+                    break
+        return result
 
 
 class NetworkSecurityGroupPortsAction(BaseAction):

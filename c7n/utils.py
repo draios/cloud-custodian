@@ -344,6 +344,7 @@ def set_annotation(i, k, v):
     ['a']
     """
     if not isinstance(i, dict):
+        print(i)
         raise ValueError("Can only annotate dictionaries")
 
     if not isinstance(v, list):
