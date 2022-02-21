@@ -67,7 +67,7 @@ class DatabaseFlagsFilter(ValueFilter):
     def process(self, resources, event=None):
 
         for r in resources:
-            if 'settings' not in r or 'databaseFlags' not in r['settings'] :
+            if 'settings' not in r or 'databaseFlags' not in r['settings']:
                 r['databaseFlags'] = {}
                 continue
 
