@@ -67,12 +67,12 @@ class DatabaseFlagsFilter(ValueFilter):
     def process(self, resources, event=None):
 
         for r in resources:
-            if 'databaseFlags' not in r:
+            if 'settings' not in r or 'databaseFlags' not in r['settings'] :
                 r['databaseFlags'] = {}
                 continue
 
             dbFlagMap = {}
-            for flag in r['databaseFlags']:
+            for flag in r['settings']['databaseFlags']:
                 dbFlagMap[flag['name']] = flag['value']
             r['databaseFlags'] = dbFlagMap
         return super(DatabaseFlagsFilter, self).process(resources)
