@@ -99,7 +99,7 @@ class FileCacheManager:
             with open(self.cache_path, 'rb') as fh:
                 try:
                     self.data = pickle.load(fh)
-                except EOFError:
+                except (EOFError, pickle.UnpicklingError):
                     return False
             log.debug("Using cache file %s" % self.cache_path)
             return True
