@@ -1015,3 +1015,24 @@ class ParentFilter(Filter):
 
         parent_key = self.manager.resource_type.parent_key
         return [r for r in resources if r[parent_key] in parent_resources_ids]
+
+class ParentNameAsNameFilter(Filter):
+    """
+    Changes a resource's name to display its parent resource's name instead
+    """
+
+    schema = {
+        'type': 'object',
+        'required': [],
+        'additionalProperties': False,
+        'properties': {
+        }
+    }
+
+    def process(self, resources, event=None):
+        for r in resources:
+            if 'c7n:parent-id' in r and 'name' in r:
+                tokens = r['c7n:parent-id'].split('/')
+                r['name'] = tokens[-1]
+
+        return resources

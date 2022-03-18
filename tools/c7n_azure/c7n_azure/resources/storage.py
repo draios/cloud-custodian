@@ -18,8 +18,8 @@ from c7n.utils import get_annotation_prefix, local_session
 from c7n_azure.actions.base import AzureBaseAction
 from c7n_azure.actions.firewall import SetFirewallAction
 from c7n_azure.constants import BLOB_TYPE, FILE_TYPE, QUEUE_TYPE, TABLE_TYPE
-from c7n_azure.filters import (FirewallBypassFilter, FirewallRulesFilter,
-                               ValueFilter)
+from c7n_azure.filters import (FirewallBypassFilter, FirewallRulesFilter, Filter,
+                               ValueFilter, ParentNameAsNameFilter)
 from c7n_azure.provider import resources
 from c7n_azure.resources.arm import ArmResourceManager
 from c7n_azure.storage_utils import StorageUtilities
@@ -586,9 +586,6 @@ class StorageBlobServices(ChildArmResourceManager):
         default_report_fields = (
             'name',
             'deleteRetentionPolicy',
-            'isVersioningEnabled',
-            'restorePolicy',
-            'containerDeleteRetentionPolicy',
             '"c7n:parent-id"'
         )
 
@@ -596,3 +593,11 @@ class StorageBlobServices(ChildArmResourceManager):
         def extra_args(cls, parent_resource):
             return {'resource_group_name': parent_resource['resourceGroup'],
                     'account_name': parent_resource['name']}
+
+@StorageBlobServices.filter_registry.register('parent-name-as-name')
+class StorageBlobParentNameAsNameFilter(ParentNameAsNameFilter):
+    schema = type_schema('storage-blobs', rinherit=ValueFilter.schema)
+
+    def __call__(self, i):
+        return super(StorageBlobParentNameAsNameFilter,
+                     self)
