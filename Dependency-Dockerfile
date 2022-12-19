@@ -36,7 +36,7 @@ RUN . /usr/local/bin/activate && \
 
 RUN mkdir /output
 
-FROM quay.io/sysdig/sysdig-mini-ubi:1.4.1
+FROM quay.io/sysdig/sysdig-mini-ubi:1.4.3
 
 LABEL name="cli" \
       repository="http://github.com/cloud-custodian/cloud-custodian"
